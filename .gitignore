@@ -14,7 +14,9 @@ outputs/
 multirun/
 checkpoints/
 *.ckpt
-data/
+# Dataset artifacts (never commit raw collected data)
+/data/
+datasets/
 .env
 secrets/
 _private/
