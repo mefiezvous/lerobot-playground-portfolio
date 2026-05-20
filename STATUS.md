@@ -1,5 +1,5 @@
 # Status — lerobot-playground-portfolio
-_Dernière mise à jour : 2026-05-20 · Session 2_
+_Dernière mise à jour : 2026-05-20 · Session 4_
 
 ## Branche active
 `feat/cube-reach-env` → PR #1 ouverte
@@ -26,27 +26,36 @@ _Dernière mise à jour : 2026-05-20 · Session 2_
 - [x] `pyproject.toml` — mypy overrides pour libs non-typées
 - [x] `.github/workflows/ci.yaml` — `MUJOCO_PLAYGROUND_BACKEND=numpy`
 
+### Policy wrappers + train.py (Session 3)
+- [x] `src/playground/policies/act_wrapper.py` — thin wrapper autour de `ACTPolicy` LeRobot
+- [x] `src/playground/policies/diffusion_wrapper.py` — thin wrapper autour de `DiffusionPolicy` LeRobot
+- [x] `src/playground/training/trainer.py` — boucle training Hydra-configurable, MLflow, checkpoint resume
+- [x] `train.py` (racine) — entrypoint CLI Hydra (ACT ou Diffusion, --config-name)
+- [x] `tests/test_policies.py` — 13 tests (ACTWrapper × 8, DiffusionWrapper × 5)
+- [x] `tests/test_trainer.py` — 10 tests (init, checkpoint resume, train loop, MLflow, WandB)
+- [x] Fix `pyproject.toml` — chemin `../robotics-platform-template` (était `../../`) + hatch wheel config
+- [x] Configs enrichies — `input_shapes`, `output_shapes`, `dataset.*`, `training.lr`
+
+### Eval + Notebooks (Session 4) ✅
+- [x] `src/playground/eval/evaluator.py` — `EvalResult` dataclass + `Evaluator` class (n_episodes, success_rate, mean_reward, mlflow logging)
+- [x] `eval.py` (racine) — entrypoint CLI Hydra + `_run_eval()` (testable sans Hydra), écrit `eval_report.json`
+- [x] `tests/test_eval.py` — 4 tests unit (runs_n_episodes, success_rate, mlflow logging, entrypoint smoke)
+- [x] `notebooks/01_quickstart.ipynb` — env setup + ScriptedPolicy → 5 épisodes + DataFrame
+- [x] `notebooks/02_train_kaggle.ipynb` — guide complet Kaggle 2×T4 : install, secrets, train, resume
+- [x] `notebooks/03_evaluate.ipynb` — charge checkpoint → Evaluator → EvalResult + plot
+- [x] `notebooks/04_publish_hf.ipynb` — HF login → push dataset + ACT + Diffusion
+
 ## Ce qui reste
 
-### Session 3 — Policy wrappers + train.py (priorité haute)
-- [ ] `src/playground/policies/act_wrapper.py` — thin wrapper autour de `ACTPolicy` LeRobot
-- [ ] `src/playground/policies/diffusion_wrapper.py` — thin wrapper autour de `DiffusionPolicy` LeRobot
-- [ ] `src/playground/training/trainer.py` — boucle training Hydra-configurable
-- [ ] `train.py` (racine) — entrypoint CLI : charge env + dataset + policy, MLflow, checkpoint resume
-- [ ] Tests correspondants
+### HuggingFace Hub (après training réel)
+- [ ] Dataset : `mefiezvous/cube-reach-v1-dataset` — collecter avec DemoCollector + push
+- [ ] Modèle ACT : `mefiezvous/cube-reach-v1-act` — entraîner sur Kaggle + push
+- [ ] Modèle Diffusion : `mefiezvous/cube-reach-v1-diffusion` — entraîner sur Kaggle + push
 
-### Session 4 — Eval + Notebooks
-- [ ] `src/playground/eval/evaluator.py` — N=50 rollouts × 3 seeds, CI-95% bootstrap
-- [ ] `eval.py` (racine) — entrypoint CLI : output `eval_report.json` + `eval_report.html`
-- [ ] `notebooks/01_quickstart.ipynb` — rollouts aléatoires + eval pretrained (Colab)
-- [ ] `notebooks/02_train_kaggle.ipynb` — training 2×T4 + resume + push Hub (Kaggle)
-- [ ] `notebooks/03_evaluate.ipynb` — benchmark complet + CI plot
-- [ ] `notebooks/04_publish_to_hub.ipynb` — dataset + model cards, Hub public uniquement
-
-### HuggingFace Hub (après training)
-- [ ] Dataset : `mefiezvous/cube-reach-v1-dataset`
-- [ ] Modèle ACT : `mefiezvous/cube-reach-v1-act`
-- [ ] Modèle Diffusion : `mefiezvous/cube-reach-v1-diffusion`
+### Post-v0.1.0 (optionnel)
+- [ ] README.md — badges CI, demo GIF, lien Hub
+- [ ] ARCHITECTURE.md — mise à jour avec eval layer
+- [ ] Release tag v0.1.0
 
 ## Stack vérifiée
 ```
