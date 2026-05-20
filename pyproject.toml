@@ -57,6 +57,19 @@ strict = true
 disallow_untyped_defs = true
 warn_unused_ignores = true
 
+[[tool.mypy.overrides]]
+module = [
+    "mujoco_playground",
+    "mujoco_playground.*",
+    "lerobot",
+    "lerobot.*",
+    "stable_baselines3",
+    "stable_baselines3.*",
+    "mlflow",
+    "mlflow.*",
+]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 addopts = "--cov=src --cov-report=term-missing"
 markers = [

@@ -35,6 +35,8 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    env:
+      MUJOCO_PLAYGROUND_BACKEND: numpy
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
