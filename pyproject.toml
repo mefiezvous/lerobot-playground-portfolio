@@ -28,10 +28,12 @@ dependencies = [
     "peft==0.19.1",
     "loguru>=0.7",
     "robotics-platform-template",
+    "ml-core",
 ]
 
 [tool.uv.sources]
 robotics-platform-template = { path = "../robotics-platform-template", editable = true }
+ml-core = { path = "../ml-core", editable = true }
 
 [project.optional-dependencies]
 dev = [
