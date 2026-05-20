@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2026 Arthur Mouraud
+# SPDX-License-Identifier: Apache-2.0
+defaults:
+  - env: cube_reach_v1
+  - policy: act
+  - _self_
+
+training:
+  total_steps: 10000
+  save_every_steps: 1000
+  checkpoint_dir: checkpoints/
+  batch_size: 64
+  num_envs: 4
+  device: cpu
+  mixed_precision: false
+  seed: 42
+
+logging:
+  backend: mlflow
+  mlflow_tracking_uri: mlruns/
+  experiment_name: cube_reach_v1_default
+  run_name: ???

@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Arthur Mouraud
+# SPDX-License-Identifier: Apache-2.0
+# @package _global_
+policy:
+  name: act
+  pretrained_repo: null
+  n_obs_steps: 1
+  n_action_steps: 100
+  chunk_size: 100

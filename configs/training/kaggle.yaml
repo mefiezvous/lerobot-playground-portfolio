@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: 2026 Arthur Mouraud
+# SPDX-License-Identifier: Apache-2.0
+# @package _global_
+training:
+  total_steps: 100000
+  save_every_steps: 5000
+  checkpoint_dir: /kaggle/working/checkpoints
+  batch_size: 256
+  num_envs: 64
+  device: cuda
+  mixed_precision: true
+  seed: 42
+
+logging:
+  mlflow_tracking_uri: /kaggle/working/mlruns
+  experiment_name: cube_reach_v1_kaggle

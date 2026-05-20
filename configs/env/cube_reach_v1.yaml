@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: 2026 Arthur Mouraud
+# SPDX-License-Identifier: Apache-2.0
+# @package _global_
+env:
+  name: CubeReachV1
+  episode_length: 200
+  success_threshold: 0.05
+  seed: 42
