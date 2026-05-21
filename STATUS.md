@@ -1,5 +1,5 @@
 # Status — lerobot-playground-portfolio
-_Dernière mise à jour : 2026-05-20 · Session 4_
+_Dernière mise à jour : 2026-05-21 · Session 5 (fixes architecturaux)_
 
 ## Branche active
 `feat/cube-reach-env` → PR #1 ouverte
@@ -31,8 +31,10 @@ _Dernière mise à jour : 2026-05-20 · Session 4_
 - [x] `src/playground/policies/diffusion_wrapper.py` — thin wrapper autour de `DiffusionPolicy` LeRobot
 - [x] `src/playground/training/trainer.py` — boucle training Hydra-configurable, MLflow, checkpoint resume
 - [x] `train.py` (racine) — entrypoint CLI Hydra (ACT ou Diffusion, --config-name)
-- [x] `tests/test_policies.py` — 13 tests (ACTWrapper × 8, DiffusionWrapper × 5)
-- [x] `tests/test_trainer.py` — 10 tests (init, checkpoint resume, train loop, MLflow, WandB)
+- [x] `tests/test_policies.py` — 4 smoke tests (re-exports → mlcore)
+- [x] `tests/test_trainer.py` — 4 smoke tests (re-exports → mlcore)
+- [x] `tests/test_train.py` — 3 smoke tests (_build_policy : act / diffusion / unknown)
+- [x] Tests d'implémentation (ACT×8, Diffusion×5, Trainer×10) migrés dans ml-core
 - [x] Fix `pyproject.toml` — chemin `../robotics-platform-template` (était `../../`) + hatch wheel config
 - [x] Configs enrichies — `input_shapes`, `output_shapes`, `dataset.*`, `training.lr`
 
