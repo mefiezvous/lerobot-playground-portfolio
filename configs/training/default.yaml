@@ -3,6 +3,7 @@
 defaults:
   - env: cube_reach_v1
   - policy: act
+  - eval: default
   - _self_
 
 dataset:
@@ -19,6 +20,10 @@ training:
   mixed_precision: false
   seed: 42
   lr: 1.0e-4
+
+hf_repo_id: null        # ex: "mefiezvous/cube-reach-v1-act"
+push_every: 500         # steps between each HF Hub push
+keep_last_n: 3          # local checkpoints to keep
 
 logging:
   backend: mlflow

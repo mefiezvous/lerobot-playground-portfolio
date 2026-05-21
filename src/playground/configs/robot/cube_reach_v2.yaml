@@ -1,0 +1,9 @@
+robot_name: cube_reach_v2
+policy_type: act
+env:
+  n_joints: 7
+  obs_keys:
+  - ee_pos
+  - cube_pos
+training:
+  max_episode_steps: 200
