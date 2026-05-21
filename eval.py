@@ -24,7 +24,7 @@ import hydra
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 
-from playground.eval.evaluator import EvalResult, Evaluator
+from playground.eval.evaluator import EvalResult, EvaluatorWithViz
 from playground.policies.act_wrapper import ACTWrapper
 from playground.policies.diffusion_wrapper import DiffusionWrapper
 
@@ -64,11 +64,15 @@ def _run_eval(cfg: DictConfig) -> EvalResult:
     policy = _build_policy(cfg.policy, device=cfg.training.device)
     policy.load_checkpoint(checkpoint_path)
 
-    evaluator = Evaluator(
+    visualize: bool = bool(cfg.eval.get("visualize", False))
+    evaluator = EvaluatorWithViz(
         policy=policy,
         env_name=env_name,
         n_episodes=n_episodes,
+        robot_name=cfg.env.name,
+        policy_type=cfg.policy.name,
         mlflow_run_id=mlflow_run_id,
+        visualize=visualize,
     )
     result = evaluator.evaluate()
 

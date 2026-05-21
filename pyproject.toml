@@ -44,7 +44,7 @@ dev = [
     "pre-commit>=3",
     "ipykernel>=6",
     "wandb>=0.16",
-    "imageio>=2.34",
+    "imageio[ffmpeg]>=2.34",
     "jinja2>=3.1",
 ]
 
