@@ -14,6 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout sibling path-deps
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git clone https://github.com/mefiezvous/robotics-platform-template ../robotics-platform-template
+          git clone https://x-access-token:${GH_PAT}@github.com/mefiezvous/ml-core ../ml-core
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
@@ -26,6 +32,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout sibling path-deps
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git clone https://github.com/mefiezvous/robotics-platform-template ../robotics-platform-template
+          git clone https://x-access-token:${GH_PAT}@github.com/mefiezvous/ml-core ../ml-core
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
@@ -35,8 +47,16 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    env:
+      MUJOCO_PLAYGROUND_BACKEND: numpy
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout sibling path-deps
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git clone https://github.com/mefiezvous/robotics-platform-template ../robotics-platform-template
+          git clone https://x-access-token:${GH_PAT}@github.com/mefiezvous/ml-core ../ml-core
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"

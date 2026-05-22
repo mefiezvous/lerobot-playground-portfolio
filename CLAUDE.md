@@ -47,3 +47,6 @@ License: Apache-2.0. Python 3.12+. Author: Arthur Mouraud (mefiezvous).
 ## Architecture Pointer
 See ARCHITECTURE.md. HAL interfaces live in robotics-platform-template.
 Never add hardware-specific code here — it goes in the private layer.
+
+## État du projet
+Voir **STATUS.md** — liste exhaustive de ce qui est fait et de ce qui reste à implémenter, mise à jour à chaque session.

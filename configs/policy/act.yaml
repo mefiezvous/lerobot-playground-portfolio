@@ -7,3 +7,7 @@ policy:
   n_obs_steps: 1
   n_action_steps: 100
   chunk_size: 100
+  input_shapes:
+    observation.state: [3]
+  output_shapes:
+    action: [8]
