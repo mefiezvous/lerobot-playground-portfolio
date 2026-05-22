@@ -27,7 +27,7 @@ def _install_mp_mock() -> None:
     panda_pkg.pick = pick_mod
 
     manipulation_mod = MagicMock()
-    manipulation_mod.register = MagicMock()
+    manipulation_mod.register_environment = MagicMock()
 
     src_mod = MagicMock()
     src_mod.manipulation = manipulation_mod

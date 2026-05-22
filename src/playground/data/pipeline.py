@@ -116,7 +116,7 @@ class DemoCollector:
                 "mujoco_playground is required for demo collection. Install with: uv sync"
             )
 
-        env = mp.registry.load(env_name)  # type: ignore[attr-defined]
+        env: Any = mp.registry.load(env_name)
         episodes: list[Episode] = []
 
         for i in range(n_episodes):

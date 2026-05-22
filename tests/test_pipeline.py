@@ -112,7 +112,7 @@ class TestDemoCollector:
         collector = DemoCollector(policy=policy, fps=20)
 
         with patch("playground.data.pipeline.mp") as mp_mock:
-            mp_mock.make.return_value = env
+            mp_mock.registry.load.return_value = env
             episodes = collector.collect(env_name="CubeReachV1", n_episodes=3)
 
         assert len(episodes) == 3
@@ -124,7 +124,7 @@ class TestDemoCollector:
         collector = DemoCollector(policy=policy, fps=20)
 
         with patch("playground.data.pipeline.mp") as mp_mock:
-            mp_mock.make.return_value = env
+            mp_mock.registry.load.return_value = env
             episodes = collector.collect(env_name="CubeReachV1", n_episodes=1)
 
         ep = episodes[0]
@@ -138,7 +138,7 @@ class TestDemoCollector:
         collector = DemoCollector(policy=policy, fps=20)
 
         with patch("playground.data.pipeline.mp") as mp_mock:
-            mp_mock.make.return_value = env
+            mp_mock.registry.load.return_value = env
             episodes = collector.collect(env_name="CubeReachV1", n_episodes=1)
 
         # Last step info has success=True (from _make_mp_env)
