@@ -39,9 +39,7 @@ class EvaluatorWithViz:
         self._robot_name = robot_name
         self._policy_type = policy_type
         self._visualize = visualize
-        self._viz_dir = viz_output_dir or Path(
-            f"eval_reports/{robot_name}/{policy_type}/viz"
-        )
+        self._viz_dir = viz_output_dir or Path(f"eval_reports/{robot_name}/{policy_type}/viz")
 
     def evaluate(self) -> EvalResult:
         """Run evaluation and, if visualize=True, render reward plot and video."""

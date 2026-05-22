@@ -32,12 +32,23 @@ def _install_mp_mock() -> None:
     sys.modules.setdefault("mujoco_playground", mp_stub)
     sys.modules.setdefault("mujoco_playground._src", mp_stub._src)
     sys.modules.setdefault("mujoco_playground._src.manipulation", mp_stub._src.manipulation)
-    sys.modules.setdefault(
-        "mujoco_playground._src.manipulation.panda_pick_cube", panda_mod
-    )
+    sys.modules.setdefault("mujoco_playground._src.manipulation.panda_pick_cube", panda_mod)
 
 
 try:
     import mujoco_playground as _real_mp  # noqa: F401
+
+    try:
+        import mujoco_playground._src.manipulation.panda_pick_cube  # noqa: F401
+    except (ImportError, ModuleNotFoundError):
+        # Internal path changed in git HEAD — stub only the missing submodule.
+        class _StubPandaPickCube:
+            """Minimal base class — gives CubeReachV1 a valid parent."""
+
+        _panda_mod = MagicMock()
+        _panda_mod.PandaPickCube = _StubPandaPickCube
+        sys.modules.setdefault(
+            "mujoco_playground._src.manipulation.panda_pick_cube", _panda_mod
+        )
 except (ImportError, OSError):
     _install_mp_mock()

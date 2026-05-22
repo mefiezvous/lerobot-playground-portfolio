@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Arthur Mouraud
 # SPDX-License-Identifier: Apache-2.0
 """Unit tests for playground.utils.visualizer."""
+
 from __future__ import annotations
 
 from pathlib import Path

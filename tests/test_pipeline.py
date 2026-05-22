@@ -201,9 +201,7 @@ class TestDemoCollector:
         assert mock_dataset.add_frame.call_count == n_episodes * steps_per_ep
         assert mock_dataset.save_episode.call_count == n_episodes
 
-    def test_to_lerobot_dataset_features_include_state_and_action(
-        self, tmp_path: Path
-    ) -> None:
+    def test_to_lerobot_dataset_features_include_state_and_action(self, tmp_path: Path) -> None:
         episodes = [
             Episode(
                 observations=[_make_obs()],

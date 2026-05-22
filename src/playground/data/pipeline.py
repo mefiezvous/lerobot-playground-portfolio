@@ -14,7 +14,7 @@ from loguru import logger
 try:
     import mujoco_playground as mp
 except (ImportError, OSError):
-    mp = None  # type: ignore[assignment]
+    mp = None
 
 try:
     from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
@@ -113,8 +113,7 @@ class DemoCollector:
         """
         if mp is None:
             raise RuntimeError(
-                "mujoco_playground is required for demo collection. "
-                "Install with: uv sync"
+                "mujoco_playground is required for demo collection. Install with: uv sync"
             )
 
         env = mp.make(env_name)  # type: ignore[attr-defined]
@@ -146,8 +145,7 @@ class DemoCollector:
                 )
             )
             logger.info(
-                f"Episode {i + 1}/{n_episodes} done | "
-                f"steps={len(ep_rewards)} | success={success}"
+                f"Episode {i + 1}/{n_episodes} done | steps={len(ep_rewards)} | success={success}"
             )
 
         env.close()
@@ -170,9 +168,7 @@ class DemoCollector:
             The created ``LeRobotDataset`` instance.
         """
         if LeRobotDataset is None:
-            raise RuntimeError(
-                "lerobot is required for dataset export. Install with: uv sync"
-            )
+            raise RuntimeError("lerobot is required for dataset export. Install with: uv sync")
 
         features: dict[str, Any] = {
             "observation.state": {
@@ -209,7 +205,5 @@ class DemoCollector:
             dataset.save_episode(task="Reach the cube")
             logger.debug(f"Saved episode {ep_idx + 1}/{len(episodes)}")
 
-        logger.info(
-            f"Dataset saved to {root} | episodes={len(episodes)} | frames={total_frames}"
-        )
+        logger.info(f"Dataset saved to {root} | episodes={len(episodes)} | frames={total_frames}")
         return dataset

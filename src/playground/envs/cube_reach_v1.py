@@ -59,4 +59,4 @@ class CubeReachV1(PandaPickCube):  # type: ignore[misc]
         )
 
 
-_mp_registry.register("CubeReachV1", CubeReachV1)
+_mp_registry.register("CubeReachV1", CubeReachV1)  # type: ignore[attr-defined]

@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Arthur Mouraud
 # SPDX-License-Identifier: Apache-2.0
 """Episode visualisation utilities: MP4 rendering and reward plotting."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -36,7 +37,9 @@ def render_episode(episode: EpisodeFrames, output_dir: Path) -> Path | None:
     Filename: {robot_name}_{policy_type}_{timestamp}.mp4
     """
     if not _IMAGEIO_AVAILABLE:
-        logger.warning("imageio not installed — skipping video render. Run: pip install imageio[ffmpeg]")  # noqa: E501
+        logger.warning(
+            "imageio not installed — skipping video render. Run: pip install imageio[ffmpeg]"
+        )  # noqa: E501
         return None
     if not episode.frames:
         logger.warning("No frames in episode — skipping video render.")

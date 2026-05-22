@@ -47,12 +47,8 @@ class TestReachReward:
 
     def test_success_threshold_at_boundary(self) -> None:
         # dist exactly at threshold — boundary is exclusive (dist < threshold)
-        reward_inside = _reach_reward(
-            jnp.array([0.049, 0.0, 0.0]), jnp.zeros(3), threshold=0.05
-        )
-        reward_outside = _reach_reward(
-            jnp.array([0.051, 0.0, 0.0]), jnp.zeros(3), threshold=0.05
-        )
+        reward_inside = _reach_reward(jnp.array([0.049, 0.0, 0.0]), jnp.zeros(3), threshold=0.05)
+        reward_outside = _reach_reward(jnp.array([0.051, 0.0, 0.0]), jnp.zeros(3), threshold=0.05)
         assert float(reward_inside) > 5.0
         assert float(reward_outside) < 5.0
 
@@ -76,9 +72,7 @@ class TestCubeReachV1Integration:
 
     @pytest.fixture(autouse=True)
     def _require_real_mp(self) -> None:
-        mp = pytest.importorskip(
-            "mujoco_playground", reason="mujoco_playground not installed"
-        )
+        mp = pytest.importorskip("mujoco_playground", reason="mujoco_playground not installed")
         # Skip if conftest installed a mock (MagicMock is not a real package).
         if isinstance(mp.make, type(MagicMock())):  # type: ignore[call-overload]
             pytest.skip("mujoco_playground is mocked — integration test skipped")
