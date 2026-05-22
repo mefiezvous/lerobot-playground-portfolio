@@ -11,6 +11,44 @@ from typing import Any
 import numpy as np
 from loguru import logger
 
+# State vector: ee_pos(3) + cube_pos(3) + joint_positions(7) + ee_to_cube(3) = 16
+_STATE_DIM: int = 16
+_STATE_NAMES: list[str] = [
+    "ee_x",
+    "ee_y",
+    "ee_z",
+    "cube_x",
+    "cube_y",
+    "cube_z",
+    "q0",
+    "q1",
+    "q2",
+    "q3",
+    "q4",
+    "q5",
+    "q6",
+    "dx",
+    "dy",
+    "dz",
+]
+
+
+def _build_state(obs: dict[str, Any]) -> np.ndarray[Any, Any]:
+    """Concatenate obs dict into a fixed 16-dim state vector.
+
+    Args:
+        obs: Raw observation dict with keys ``ee_pos``, ``cube_pos``, ``joint_positions``.
+
+    Returns:
+        float32 array of shape (16,): ee_pos | cube_pos | joint_positions | ee_to_cube.
+    """
+    ee_pos = np.asarray(obs.get("ee_pos", np.zeros(3)), dtype=np.float32)
+    cube_pos = np.asarray(obs.get("cube_pos", np.zeros(3)), dtype=np.float32)
+    joint_pos = np.asarray(obs.get("joint_positions", np.zeros(7)), dtype=np.float32)
+    ee_to_cube = cube_pos - ee_pos
+    return np.concatenate([ee_pos, cube_pos, joint_pos, ee_to_cube])
+
+
 try:
     import mujoco_playground as mp
 except (ImportError, OSError):
@@ -173,8 +211,8 @@ class DemoCollector:
         features: dict[str, Any] = {
             "observation.state": {
                 "dtype": "float32",
-                "shape": (3,),
-                "names": ["ee_x", "ee_y", "ee_z"],
+                "shape": (_STATE_DIM,),
+                "names": _STATE_NAMES,
             },
             "action": {
                 "dtype": "float32",
@@ -195,9 +233,7 @@ class DemoCollector:
             for obs, action in zip(episode.observations, episode.actions, strict=False):
                 dataset.add_frame(
                     {
-                        "observation.state": np.asarray(
-                            obs.get("ee_pos", np.zeros(3)), dtype=np.float32
-                        ),
+                        "observation.state": _build_state(obs),
                         "action": np.asarray(action, dtype=np.float32),
                     }
                 )
