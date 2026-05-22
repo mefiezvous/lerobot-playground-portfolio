@@ -19,7 +19,7 @@ authors = [{ name = "Arthur Mouraud", email = "127029130+mefiezvous@users.norepl
 keywords = ["robotics", "lerobot", "mujoco", "reinforcement-learning", "imitation-learning"]
 dependencies = [
     "lerobot==0.5.1",
-    "mujoco==3.5.0",
+    "mujoco==3.8.0",
     "mujoco-mjx==3.8.0",
     "mujoco_playground==0.2.0",
     "stable-baselines3==2.8.0",
