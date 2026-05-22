@@ -51,18 +51,40 @@ def _build_policy(policy_cfg: DictConfig, device: str) -> PolicyWrapper:
         return ACTWrapper(policy_cfg, device=device)
     if name == "diffusion":
         return DiffusionWrapper(policy_cfg, device=device)
-    raise ValueError(
-        f"Unknown policy name: '{name}'. Expected 'act' or 'diffusion'."
-    )
+    raise ValueError(f"Unknown policy name: '{name}'. Expected 'act' or 'diffusion'.")
 
 
-def _build_dataloader(dataset_cfg: DictConfig, batch_size: int) -> DataLoader[Any]:
-    """Load a LeRobotDataset and wrap it in a DataLoader."""
+def _build_dataloader(
+    dataset_cfg: DictConfig,
+    policy_cfg: DictConfig,
+    batch_size: int,
+    fps: int,
+) -> DataLoader[Any]:
+    """Load a LeRobotDataset and wrap it in a DataLoader with temporal chunking.
+
+    Args:
+        dataset_cfg: Dataset config (repo_id, root).
+        policy_cfg: Policy config providing n_obs_steps and chunk_size/n_action_steps.
+        batch_size: Training batch size.
+        fps: Environment control frequency (Hz) for timestamp computation.
+    """
     if not _LEROBOT_AVAILABLE:
         raise ImportError("lerobot is required. Install with: uv sync")
 
+    n_obs_steps: int = policy_cfg.get("n_obs_steps", 1)
+    chunk_size: int = int(policy_cfg.get("chunk_size", policy_cfg.get("n_action_steps", 1)))
+
+    delta_timestamps: dict[str, list[float]] = {
+        "observation.state": [(i - n_obs_steps + 1) / fps for i in range(n_obs_steps)],
+        "action": [i / fps for i in range(chunk_size)],
+    }
+
     root: Path | None = Path(dataset_cfg.root) if dataset_cfg.get("root") else None
-    dataset = LeRobotDataset(dataset_cfg.repo_id, root=root)
+    dataset = LeRobotDataset(
+        dataset_cfg.repo_id,
+        root=root,
+        delta_timestamps=delta_timestamps,
+    )
     return DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
 
@@ -80,8 +102,20 @@ def main(cfg: DictConfig) -> None:
     logger.debug(f"Full config:\n{OmegaConf.to_yaml(cfg)}")
 
     policy = _build_policy(cfg.policy, device=cfg.training.device)
-    dataloader = _build_dataloader(cfg.dataset, batch_size=cfg.training.batch_size)
-    trainer = Trainer(cfg, policy, dataloader)
+    dataloader = _build_dataloader(
+        cfg.dataset,
+        cfg.policy,
+        batch_size=cfg.training.batch_size,
+        fps=cfg.env.fps,
+    )
+    trainer = Trainer(
+        cfg,
+        policy,
+        dataloader,
+        robot_name=cfg.env.name,
+        policy_type=cfg.policy.name,
+        hf_repo_id=cfg.get("hf_repo_id"),
+    )
     trainer.train()
 
 

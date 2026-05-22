@@ -8,6 +8,6 @@ policy:
   n_action_steps: 100
   chunk_size: 100
   input_shapes:
-    observation.state: [3]
+    observation.state: [16]
   output_shapes:
     action: [8]

@@ -3,6 +3,7 @@
 # @package _global_
 env:
   name: CubeReachV1
+  fps: 20
   episode_length: 200
   success_threshold: 0.05
   seed: 42
