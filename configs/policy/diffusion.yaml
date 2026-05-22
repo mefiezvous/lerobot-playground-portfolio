@@ -8,6 +8,6 @@ policy:
   n_action_steps: 8
   num_inference_steps: 10
   input_shapes:
-    observation.state: [3]
+    observation.state: [16]
   output_shapes:
     action: [8]
