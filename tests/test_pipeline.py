@@ -225,3 +225,54 @@ class TestDemoCollector:
         features = lrd_mock.create.call_args.kwargs["features"]
         assert "observation.state" in features
         assert "action" in features
+
+    def test_state_vector_dim_is_16(self, tmp_path: Path) -> None:
+        episodes = [
+            Episode(
+                observations=[_make_obs()],
+                actions=[np.zeros(8, dtype=np.float32)],
+                rewards=[0.0],
+                success=False,
+            )
+        ]
+        collector = DemoCollector(policy=ScriptedPolicy(), fps=20)
+
+        mock_dataset = MagicMock()
+        with patch("playground.data.pipeline.LeRobotDataset") as lrd_mock:
+            lrd_mock.create.return_value = mock_dataset
+            collector.to_lerobot_dataset(
+                episodes=episodes,
+                repo_id="mefiezvous/test-dataset",
+                root=tmp_path,
+            )
+
+        features = lrd_mock.create.call_args.kwargs["features"]
+        assert features["observation.state"]["shape"] == (16,)
+        assert len(features["observation.state"]["names"]) == 16
+
+    def test_state_vector_ee_to_cube_is_correct(self, tmp_path: Path) -> None:
+        # ee_x=0.3, cube_x=0.0 → ee_to_cube[0] = 0.0 - 0.3 = -0.3
+        obs = _make_obs(ee_x=0.3, cube_x=0.0)
+        episodes = [
+            Episode(
+                observations=[obs],
+                actions=[np.zeros(8, dtype=np.float32)],
+                rewards=[0.0],
+                success=False,
+            )
+        ]
+        collector = DemoCollector(policy=ScriptedPolicy(), fps=20)
+
+        mock_dataset = MagicMock()
+        with patch("playground.data.pipeline.LeRobotDataset") as lrd_mock:
+            lrd_mock.create.return_value = mock_dataset
+            collector.to_lerobot_dataset(
+                episodes=episodes,
+                repo_id="mefiezvous/test-dataset",
+                root=tmp_path,
+            )
+
+        state = mock_dataset.add_frame.call_args[0][0]["observation.state"]
+        assert state.shape == (16,)
+        # indices 13-15 are ee_to_cube
+        np.testing.assert_allclose(state[13], -0.3, atol=1e-6)
