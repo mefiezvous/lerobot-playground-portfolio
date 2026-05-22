@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -12,16 +12,14 @@ import numpy as np
 from loguru import logger
 
 try:
-    import mujoco_playground as mp  # type: ignore[import-untyped]
+    import mujoco_playground as mp
 except (ImportError, OSError):
     mp = None  # type: ignore[assignment]
 
 try:
-    from lerobot.common.datasets.lerobot_dataset import (  # type: ignore[import-untyped]
-        LeRobotDataset,
-    )
+    from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
 except ImportError:
-    LeRobotDataset = None  # type: ignore[assignment,misc]
+    LeRobotDataset = None  # type: ignore[assignment]
 
 
 @dataclass
@@ -36,7 +34,7 @@ class Episode:
     """
 
     observations: list[dict[str, Any]]
-    actions: list[np.ndarray]
+    actions: list[np.ndarray[Any, Any]]
     rewards: list[float]
     success: bool = False
 
@@ -63,7 +61,7 @@ class ScriptedPolicy:
         self._noise_scale = noise_scale
         self._rng = np.random.default_rng(seed)
 
-    def select_action(self, obs: dict[str, Any]) -> np.ndarray:
+    def select_action(self, obs: dict[str, Any]) -> np.ndarray[Any, Any]:
         """Return an 8-D action that moves the EE toward the cube.
 
         Args:
@@ -119,13 +117,13 @@ class DemoCollector:
                 "Install with: uv sync"
             )
 
-        env = mp.make(env_name)
+        env = mp.make(env_name)  # type: ignore[attr-defined]
         episodes: list[Episode] = []
 
         for i in range(n_episodes):
             obs, _ = env.reset(seed=self._seed + i)
             ep_obs: list[dict[str, Any]] = []
-            ep_actions: list[np.ndarray] = []
+            ep_actions: list[np.ndarray[Any, Any]] = []
             ep_rewards: list[float] = []
             success = False
             done = False
@@ -198,7 +196,7 @@ class DemoCollector:
 
         total_frames = 0
         for ep_idx, episode in enumerate(episodes):
-            for obs, action in zip(episode.observations, episode.actions):
+            for obs, action in zip(episode.observations, episode.actions, strict=False):
                 dataset.add_frame(
                     {
                         "observation.state": np.asarray(

@@ -24,6 +24,7 @@ def test_diffusion_wrapper_importable() -> None:
 @pytest.mark.unit
 def test_act_wrapper_is_mlcore_class() -> None:
     from mlcore.policies.act_wrapper import ACTWrapper as MlACT
+
     from playground.policies.act_wrapper import ACTWrapper as PubACT
 
     assert PubACT is MlACT
@@ -32,6 +33,7 @@ def test_act_wrapper_is_mlcore_class() -> None:
 @pytest.mark.unit
 def test_diffusion_wrapper_is_mlcore_class() -> None:
     from mlcore.policies.diffusion_wrapper import DiffusionWrapper as MlDiff
+
     from playground.policies.diffusion_wrapper import DiffusionWrapper as PubDiff
 
     assert PubDiff is MlDiff

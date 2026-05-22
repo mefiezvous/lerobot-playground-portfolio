@@ -15,11 +15,11 @@ def test_build_policy_act() -> None:
     import train as train_module
 
     cfg = OmegaConf.create({"name": "act"})
-    with patch("train.ACTWrapper") as MockACT:
-        MockACT.return_value = MagicMock()
+    with patch("train.ACTWrapper") as mock_act:
+        mock_act.return_value = MagicMock()
         policy = train_module._build_policy(cfg, device="cpu")
-    MockACT.assert_called_once_with(cfg, device="cpu")
-    assert policy is MockACT.return_value
+    mock_act.assert_called_once_with(cfg, device="cpu")
+    assert policy is mock_act.return_value
 
 
 @pytest.mark.unit
@@ -27,11 +27,11 @@ def test_build_policy_diffusion() -> None:
     import train as train_module
 
     cfg = OmegaConf.create({"name": "diffusion"})
-    with patch("train.DiffusionWrapper") as MockDiff:
-        MockDiff.return_value = MagicMock()
+    with patch("train.DiffusionWrapper") as mock_diff:
+        mock_diff.return_value = MagicMock()
         policy = train_module._build_policy(cfg, device="cpu")
-    MockDiff.assert_called_once_with(cfg, device="cpu")
-    assert policy is MockDiff.return_value
+    mock_diff.assert_called_once_with(cfg, device="cpu")
+    assert policy is mock_diff.return_value
 
 
 @pytest.mark.unit

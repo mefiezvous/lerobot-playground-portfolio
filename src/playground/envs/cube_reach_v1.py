@@ -8,10 +8,8 @@ from typing import Any
 
 import jax
 import jax.numpy as jnp
-from mujoco_playground import register  # type: ignore[import-untyped]
-from mujoco_playground._src.manipulation.panda_pick_cube import (  # type: ignore[import-untyped]
-    PandaPickCube,
-)
+from mujoco_playground import registry as _mp_registry
+from mujoco_playground._src.manipulation.panda_pick_cube import PandaPickCube
 
 
 def _reach_reward(
@@ -35,7 +33,7 @@ def _reach_reward(
     return reach_reward + 5.0 * success.astype(jnp.float32)
 
 
-class CubeReachV1(PandaPickCube):
+class CubeReachV1(PandaPickCube):  # type: ignore[misc]
     """PandaPickCube subclass with dense reach-only reward.
 
     Overrides only the reward signal. Physics, observations, and episode
@@ -61,4 +59,4 @@ class CubeReachV1(PandaPickCube):
         )
 
 
-register("CubeReachV1", CubeReachV1)
+_mp_registry.register("CubeReachV1", CubeReachV1)

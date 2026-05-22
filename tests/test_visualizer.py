@@ -4,11 +4,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
-
-from unittest.mock import MagicMock
 
 from playground.utils.visualizer import EpisodeFrames, plot_rewards, render_episode
 

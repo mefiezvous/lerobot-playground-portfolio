@@ -17,7 +17,6 @@ import pytest
 
 from playground.data.pipeline import DemoCollector, Episode, ScriptedPolicy
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

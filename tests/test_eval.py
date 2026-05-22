@@ -47,13 +47,13 @@ def test_eval_entrypoint_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
     )
 
     with (
-        patch("eval.ACTWrapper") as MockACT,
-        patch("eval.EvaluatorWithViz") as MockEvaluator,
+        patch("eval.ACTWrapper") as mock_act,
+        patch("eval.EvaluatorWithViz") as mock_evaluator,
     ):
-        MockACT.return_value = policy
-        MockEvaluator.return_value.evaluate.return_value = mock_result
+        mock_act.return_value = policy
+        mock_evaluator.return_value.evaluate.return_value = mock_result
 
         eval_module._run_eval(cfg)
 
-    MockEvaluator.assert_called_once()
-    MockEvaluator.return_value.evaluate.assert_called_once()
+    mock_evaluator.assert_called_once()
+    mock_evaluator.return_value.evaluate.assert_called_once()

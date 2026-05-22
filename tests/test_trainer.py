@@ -24,6 +24,7 @@ def test_policy_wrapper_importable() -> None:
 @pytest.mark.unit
 def test_trainer_is_mlcore_class() -> None:
     from mlcore.training.trainer import Trainer as MlTrainer
+
     from playground.training.trainer import Trainer as PubTrainer
 
     assert PubTrainer is MlTrainer
@@ -32,6 +33,7 @@ def test_trainer_is_mlcore_class() -> None:
 @pytest.mark.unit
 def test_policy_wrapper_is_mlcore_protocol() -> None:
     from mlcore.training.trainer import PolicyWrapper as MlPW
+
     from playground.training.trainer import PolicyWrapper as PubPW
 
     assert PubPW is MlPW

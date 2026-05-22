@@ -11,6 +11,8 @@ mujoco_playground installation (real or numpy-backend).
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 import jax.numpy as jnp
 import pytest
 
