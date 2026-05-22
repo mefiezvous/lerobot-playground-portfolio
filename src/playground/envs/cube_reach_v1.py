@@ -8,8 +8,13 @@ from typing import Any
 
 import jax
 import jax.numpy as jnp
-from mujoco_playground import registry as _mp_registry
-from mujoco_playground._src.manipulation.panda_pick_cube import PandaPickCube
+from mujoco_playground._src.manipulation import register as _mp_manipulation_register
+from mujoco_playground._src.manipulation.franka_emika_panda.pick import (
+    PandaPickCube,
+)
+from mujoco_playground._src.manipulation.franka_emika_panda.pick import (
+    default_config as _panda_default_config,
+)
 
 
 def _reach_reward(
@@ -59,4 +64,4 @@ class CubeReachV1(PandaPickCube):  # type: ignore[misc]
         )
 
 
-_mp_registry.register("CubeReachV1", CubeReachV1)  # type: ignore[attr-defined]
+_mp_manipulation_register("CubeReachV1", CubeReachV1, _panda_default_config)

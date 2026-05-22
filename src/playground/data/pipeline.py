@@ -14,12 +14,12 @@ from loguru import logger
 try:
     import mujoco_playground as mp
 except (ImportError, OSError):
-    mp = None
+    mp = None  # type: ignore[assignment]
 
 try:
     from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
 except ImportError:
-    LeRobotDataset = None  # type: ignore[assignment]
+    LeRobotDataset = None
 
 
 @dataclass
@@ -116,7 +116,7 @@ class DemoCollector:
                 "mujoco_playground is required for demo collection. Install with: uv sync"
             )
 
-        env = mp.make(env_name)  # type: ignore[attr-defined]
+        env = mp.registry.load(env_name)  # type: ignore[attr-defined]
         episodes: list[Episode] = []
 
         for i in range(n_episodes):
