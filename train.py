@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any
 
 import hydra
+from hydra.utils import get_class
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 from torch.utils.data import DataLoader
@@ -39,19 +40,39 @@ except ImportError:
     LeRobotDataset = None  # type: ignore[assignment,misc]
     _LEROBOT_AVAILABLE = False
 
-from playground.policies.act_wrapper import ACTWrapper
-from playground.policies.diffusion_wrapper import DiffusionWrapper
 from playground.training.trainer import PolicyWrapper, Trainer
 
 
 def _build_policy(policy_cfg: DictConfig, device: str) -> PolicyWrapper:
-    """Instantiate the appropriate policy wrapper from the Hydra policy config."""
-    name: str = policy_cfg.name
-    if name == "act":
-        return ACTWrapper(policy_cfg, device=device)
-    if name == "diffusion":
-        return DiffusionWrapper(policy_cfg, device=device)
-    raise ValueError(f"Unknown policy name: '{name}'. Expected 'act' or 'diffusion'.")
+    """Instantiate the appropriate policy wrapper via Hydra ``_target_`` resolution.
+
+    The ``_target_`` field on the policy sub-config selects the wrapper class
+    (e.g. ``playground.policies.act_wrapper.ACTWrapper``). The wrapper receives
+    the full ``policy_cfg`` as its ``cfg`` argument so it can read fields such
+    as ``n_obs_steps``, ``input_shapes``, ``pretrained_repo``, etc.
+
+    Args:
+        policy_cfg: The ``cfg.policy`` sub-config (must contain ``_target_``).
+        device: PyTorch device string (e.g. ``"cpu"``, ``"cuda"``).
+
+    Raises:
+        ValueError: If ``_target_`` is missing or cannot be resolved.
+    """
+    target: str | None = policy_cfg.get("_target_")
+    if not target:
+        raise ValueError(
+            "Policy config is missing the '_target_' field. "
+            "Add e.g. '_target_: playground.policies.act_wrapper.ACTWrapper' "
+            "to your configs/policy/<name>.yaml under the 'policy:' block."
+        )
+    try:
+        wrapper_cls = get_class(target)
+    except (ImportError, ModuleNotFoundError, AttributeError, ValueError) as exc:
+        raise ValueError(
+            f"Failed to resolve policy '_target_' = '{target}'. "
+            f"Ensure the dotted path points to an importable class. ({exc})"
+        ) from exc
+    return wrapper_cls(policy_cfg, device=device)  # type: ignore[no-any-return]
 
 
 def _build_dataloader(

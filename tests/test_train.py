@@ -11,36 +11,87 @@ from omegaconf import OmegaConf
 
 
 @pytest.mark.unit
-def test_build_policy_act() -> None:
+def test_build_policy_act_uses_target() -> None:
+    import train as train_module
+
+    cfg = OmegaConf.create(
+        {
+            "_target_": "playground.policies.act_wrapper.ACTWrapper",
+            "name": "act",
+        }
+    )
+    fake_instance = MagicMock()
+    fake_cls = MagicMock(return_value=fake_instance)
+    with patch("train.get_class", return_value=fake_cls) as mock_get_class:
+        policy = train_module._build_policy(cfg, device="cpu")
+    mock_get_class.assert_called_once_with("playground.policies.act_wrapper.ACTWrapper")
+    fake_cls.assert_called_once_with(cfg, device="cpu")
+    assert policy is fake_instance
+
+
+@pytest.mark.unit
+def test_build_policy_diffusion_uses_target() -> None:
+    import train as train_module
+
+    cfg = OmegaConf.create(
+        {
+            "_target_": "playground.policies.diffusion_wrapper.DiffusionWrapper",
+            "name": "diffusion",
+        }
+    )
+    fake_instance = MagicMock()
+    fake_cls = MagicMock(return_value=fake_instance)
+    with patch("train.get_class", return_value=fake_cls) as mock_get_class:
+        policy = train_module._build_policy(cfg, device="cpu")
+    mock_get_class.assert_called_once_with(
+        "playground.policies.diffusion_wrapper.DiffusionWrapper"
+    )
+    fake_cls.assert_called_once_with(cfg, device="cpu")
+    assert policy is fake_instance
+
+
+@pytest.mark.unit
+def test_build_policy_missing_target_raises() -> None:
     import train as train_module
 
     cfg = OmegaConf.create({"name": "act"})
-    with patch("train.ACTWrapper") as mock_act:
-        mock_act.return_value = MagicMock()
-        policy = train_module._build_policy(cfg, device="cpu")
-    mock_act.assert_called_once_with(cfg, device="cpu")
-    assert policy is mock_act.return_value
-
-
-@pytest.mark.unit
-def test_build_policy_diffusion() -> None:
-    import train as train_module
-
-    cfg = OmegaConf.create({"name": "diffusion"})
-    with patch("train.DiffusionWrapper") as mock_diff:
-        mock_diff.return_value = MagicMock()
-        policy = train_module._build_policy(cfg, device="cpu")
-    mock_diff.assert_called_once_with(cfg, device="cpu")
-    assert policy is mock_diff.return_value
-
-
-@pytest.mark.unit
-def test_build_policy_unknown_raises() -> None:
-    import train as train_module
-
-    cfg = OmegaConf.create({"name": "unknown_policy"})
-    with pytest.raises(ValueError, match="Unknown policy name"):
+    with pytest.raises(ValueError, match="_target_"):
         train_module._build_policy(cfg, device="cpu")
+
+
+@pytest.mark.unit
+def test_build_policy_invalid_target_raises() -> None:
+    import train as train_module
+
+    cfg = OmegaConf.create(
+        {"_target_": "nonexistent.module.NotAClass", "name": "act"}
+    )
+    with pytest.raises(ValueError, match="Failed to resolve policy '_target_'"):
+        train_module._build_policy(cfg, device="cpu")
+
+
+@pytest.mark.unit
+def test_act_policy_config_has_target() -> None:
+    """The shipped act.yaml must declare a _target_ for pluggable instantiation."""
+    from pathlib import Path
+
+    cfg = OmegaConf.load(
+        Path(__file__).resolve().parent.parent / "configs" / "policy" / "act.yaml"
+    )
+    assert cfg.policy._target_ == "playground.policies.act_wrapper.ACTWrapper"
+
+
+@pytest.mark.unit
+def test_diffusion_policy_config_has_target() -> None:
+    """The shipped diffusion.yaml must declare a _target_ for pluggable instantiation."""
+    from pathlib import Path
+
+    cfg = OmegaConf.load(
+        Path(__file__).resolve().parent.parent / "configs" / "policy" / "diffusion.yaml"
+    )
+    assert (
+        cfg.policy._target_ == "playground.policies.diffusion_wrapper.DiffusionWrapper"
+    )
 
 
 @pytest.mark.unit

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # @package _global_
 policy:
+  _target_: playground.policies.diffusion_wrapper.DiffusionWrapper
   name: diffusion
   pretrained_repo: null
   n_obs_steps: 2
