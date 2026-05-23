@@ -75,6 +75,8 @@ module = [
     "mlflow.*",
     "mlcore",
     "mlcore.*",
+    "robotics_platform",
+    "robotics_platform.*",
     "yaml",
 ]
 ignore_missing_imports = true

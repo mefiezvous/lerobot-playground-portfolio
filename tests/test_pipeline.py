@@ -31,7 +31,7 @@ def _make_obs(ee_x: float = 0.3, cube_x: float = 0.0) -> dict[str, Any]:
 
 
 def _make_mp_env(n_steps_until_done: int = 10) -> MagicMock:
-    """Fake mujoco_playground env that terminates after n steps."""
+    """Fake env adapter that terminates after n steps."""
     env = MagicMock()
     env.reset.return_value = (_make_obs(), {})
 
@@ -111,9 +111,8 @@ class TestDemoCollector:
         policy = ScriptedPolicy(gain=2.0, noise_scale=0.0)
         collector = DemoCollector(policy=policy, fps=20)
 
-        with patch("playground.data.pipeline.mp") as mp_mock:
-            mp_mock.registry.load.return_value = env
-            episodes = collector.collect(env_name="CubeReachV1", n_episodes=3)
+        with patch("playground.data.pipeline._resolve_env", return_value=env):
+            episodes = collector.collect(env_name="mujoco_pgnd:cube_reach_v1", n_episodes=3)
 
         assert len(episodes) == 3
 
@@ -123,9 +122,8 @@ class TestDemoCollector:
         policy = ScriptedPolicy(gain=2.0, noise_scale=0.0)
         collector = DemoCollector(policy=policy, fps=20)
 
-        with patch("playground.data.pipeline.mp") as mp_mock:
-            mp_mock.registry.load.return_value = env
-            episodes = collector.collect(env_name="CubeReachV1", n_episodes=1)
+        with patch("playground.data.pipeline._resolve_env", return_value=env):
+            episodes = collector.collect(env_name="mujoco_pgnd:cube_reach_v1", n_episodes=1)
 
         ep = episodes[0]
         assert len(ep.observations) == n_steps
@@ -137,12 +135,27 @@ class TestDemoCollector:
         policy = ScriptedPolicy(gain=2.0, noise_scale=0.0)
         collector = DemoCollector(policy=policy, fps=20)
 
-        with patch("playground.data.pipeline.mp") as mp_mock:
-            mp_mock.registry.load.return_value = env
-            episodes = collector.collect(env_name="CubeReachV1", n_episodes=1)
+        with patch("playground.data.pipeline._resolve_env", return_value=env):
+            episodes = collector.collect(env_name="mujoco_pgnd:cube_reach_v1", n_episodes=1)
 
         # Last step info has success=True (from _make_mp_env)
         assert episodes[0].success is True
+
+    def test_collect_falls_back_to_mujoco_playground_adapter_for_bare_name(self) -> None:
+        """Legacy bare mp env name (no ``:``) must still work via auto-wrap."""
+        env = _make_mp_env(n_steps_until_done=2)
+        policy = ScriptedPolicy(gain=2.0, noise_scale=0.0)
+        collector = DemoCollector(policy=policy, fps=20)
+
+        # Patch the lazy loader so MujocoPlaygroundAdapter delegates to our fake.
+        with patch(
+            "playground.envs.mujoco_playground_adapter._load_mp_env",
+            return_value=env,
+        ):
+            episodes = collector.collect(env_name="CubeReachV1", n_episodes=1)
+
+        assert len(episodes) == 1
+        assert len(episodes[0].observations) == 2
 
     # ------------------------------------------------------------------
     # to_lerobot_dataset

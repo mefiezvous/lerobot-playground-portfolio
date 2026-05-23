@@ -10,49 +10,54 @@ from typing import Any
 
 import numpy as np
 from loguru import logger
+from mlcore.observation.builder import ObservationBuilder
+from robotics_platform.envs.registry import EnvAdapterRegistry
 
-# State vector: ee_pos(3) + cube_pos(3) + joint_positions(7) + ee_to_cube(3) = 16
-_STATE_DIM: int = 16
-_STATE_NAMES: list[str] = [
-    "ee_x",
-    "ee_y",
-    "ee_z",
-    "cube_x",
-    "cube_y",
-    "cube_z",
-    "q0",
-    "q1",
-    "q2",
-    "q3",
-    "q4",
-    "q5",
-    "q6",
-    "dx",
-    "dy",
-    "dz",
-]
+# Import side-effect: registers playground env adapters in the registry.
+import playground.envs.registrations  # noqa: F401
+from playground.envs.mujoco_playground_adapter import MujocoPlaygroundAdapter
 
 
-def _build_state(obs: dict[str, Any]) -> np.ndarray[Any, Any]:
-    """Concatenate obs dict into a fixed 16-dim state vector.
+def _default_obs_builder() -> ObservationBuilder:
+    """Return the canonical 16-dim ObservationBuilder for the CubeReach tasks.
+
+    Layout: ee_pos(3) + cube_pos(3) + joint_positions(7) + (cube_pos - ee_pos)(3) = 16.
+    """
+    return ObservationBuilder(
+        keys=("ee_pos", "cube_pos", "joint_positions"),
+        key_shapes=(3, 3, 7),
+        relational=(("cube_pos", "ee_pos"),),
+    )
+
+
+def _resolve_env(env_name: str) -> Any:
+    """Return an EnvAdapter for ``env_name``.
+
+    Resolution order:
+
+    1. If ``env_name`` is registered in :class:`EnvAdapterRegistry`, instantiate
+       the registered factory (zero-arg constructor expected).
+    2. Otherwise — backward-compat fallback — wrap the name in a
+       :class:`MujocoPlaygroundAdapter` so legacy bare names like
+       ``"CubeReachV1"`` keep working without an explicit registration.
 
     Args:
-        obs: Raw observation dict with keys ``ee_pos``, ``cube_pos``, ``joint_positions``.
+        env_name: Either a namespaced registry key (e.g.
+            ``"mujoco_pgnd:cube_reach_v1"``) or a raw mujoco_playground env name.
 
     Returns:
-        float32 array of shape (16,): ee_pos | cube_pos | joint_positions | ee_to_cube.
+        An :class:`~robotics_platform.envs.interfaces.EnvAdapter` instance.
     """
-    ee_pos = np.asarray(obs.get("ee_pos", np.zeros(3)), dtype=np.float32)
-    cube_pos = np.asarray(obs.get("cube_pos", np.zeros(3)), dtype=np.float32)
-    joint_pos = np.asarray(obs.get("joint_positions", np.zeros(7)), dtype=np.float32)
-    ee_to_cube = cube_pos - ee_pos
-    return np.concatenate([ee_pos, cube_pos, joint_pos, ee_to_cube])
+    try:
+        factory = EnvAdapterRegistry.get(env_name)
+    except KeyError:
+        logger.warning(
+            f"env '{env_name}' not in EnvAdapterRegistry — falling back to "
+            "MujocoPlaygroundAdapter wrapping. Consider registering it explicitly."
+        )
+        return MujocoPlaygroundAdapter(env_name=env_name, task_description="")
+    return factory()
 
-
-try:
-    import mujoco_playground as mp
-except (ImportError, OSError):
-    mp = None  # type: ignore[assignment]
 
 try:
     from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
@@ -65,7 +70,7 @@ class Episode:
     """Single collected trajectory.
 
     Attributes:
-        observations: Raw obs dicts from mujoco_playground (one per step).
+        observations: Raw obs dicts from the env (one per step).
         actions: Actions applied at each step, shape (8,) each.
         rewards: Scalar reward received at each step.
         success: True if the episode ended with a successful reach.
@@ -127,6 +132,9 @@ class DemoCollector:
         policy: Scripted policy used to generate actions.
         fps: Control frequency used to tag the LeRobotDataset.
         seed: Base random seed; episode i uses seed + i.
+        obs_builder: Optional :class:`ObservationBuilder` that flattens raw obs
+            dicts into the LeRobotDataset state vector. Defaults to the
+            canonical 16-dim CubeReach layout.
     """
 
     def __init__(
@@ -134,27 +142,26 @@ class DemoCollector:
         policy: ScriptedPolicy,
         fps: int = 20,
         seed: int = 42,
+        obs_builder: ObservationBuilder | None = None,
     ) -> None:
         self._policy = policy
         self._fps = fps
         self._seed = seed
+        self._obs_builder = obs_builder if obs_builder is not None else _default_obs_builder()
 
     def collect(self, env_name: str, n_episodes: int) -> list[Episode]:
         """Run the scripted policy for n_episodes and return collected data.
 
         Args:
-            env_name: Registered mujoco_playground environment name.
+            env_name: EnvAdapter registry key (e.g.
+                ``"mujoco_pgnd:cube_reach_v1"``) or legacy bare mujoco_playground
+                env name (auto-wrapped as a fallback).
             n_episodes: Number of episodes to collect.
 
         Returns:
             List of Episode objects, one per episode.
         """
-        if mp is None:
-            raise RuntimeError(
-                "mujoco_playground is required for demo collection. Install with: uv sync"
-            )
-
-        env: Any = mp.registry.load(env_name)
+        env: Any = _resolve_env(env_name)
         episodes: list[Episode] = []
 
         for i in range(n_episodes):
@@ -208,11 +215,12 @@ class DemoCollector:
         if LeRobotDataset is None:
             raise RuntimeError("lerobot is required for dataset export. Install with: uv sync")
 
+        builder = self._obs_builder
         features: dict[str, Any] = {
             "observation.state": {
                 "dtype": "float32",
-                "shape": (_STATE_DIM,),
-                "names": _STATE_NAMES,
+                "shape": (builder.state_dim,),
+                "names": builder.state_names,
             },
             "action": {
                 "dtype": "float32",
@@ -233,7 +241,7 @@ class DemoCollector:
             for obs, action in zip(episode.observations, episode.actions, strict=False):
                 dataset.add_frame(
                     {
-                        "observation.state": _build_state(obs),
+                        "observation.state": builder.build(obs),
                         "action": np.asarray(action, dtype=np.float32),
                     }
                 )
