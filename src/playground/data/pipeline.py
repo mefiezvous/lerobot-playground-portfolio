@@ -10,6 +10,14 @@ from typing import Any
 
 import numpy as np
 from loguru import logger
+from mlcore.data.schema import (
+    ACTION_KEY,
+    OBS_STATE_KEY,
+    SUCCESS_KEY,
+    TASK_DESCRIPTION_KEY,
+    TASK_ID_KEY,
+    build_features,
+)
 from mlcore.observation.builder import ObservationBuilder
 from robotics_platform.envs.registry import EnvAdapterRegistry
 
@@ -73,12 +81,17 @@ class Episode:
         observations: Raw obs dicts from the env (one per step).
         actions: Actions applied at each step, shape (8,) each.
         rewards: Scalar reward received at each step.
+        task_id: Short, stable identifier for the task (e.g. ``"cube_reach_v1"``).
+        task_description: Natural-language description of the task, used both as
+            a per-frame label and as the ``task`` arg to ``save_episode``.
         success: True if the episode ended with a successful reach.
     """
 
     observations: list[dict[str, Any]]
     actions: list[np.ndarray[Any, Any]]
     rewards: list[float]
+    task_id: str
+    task_description: str
     success: bool = False
 
 
@@ -135,6 +148,11 @@ class DemoCollector:
         obs_builder: Optional :class:`ObservationBuilder` that flattens raw obs
             dicts into the LeRobotDataset state vector. Defaults to the
             canonical 16-dim CubeReach layout.
+        task_id: Short, stable identifier stamped on every collected episode.
+            Defaults to ``"cube_reach_v1"`` for the current CubeReach use case.
+        task_description: Natural-language task label stamped on every collected
+            episode and forwarded as the ``task`` argument to
+            ``LeRobotDataset.save_episode``. Defaults to ``"Reach the red cube"``.
     """
 
     def __init__(
@@ -143,11 +161,15 @@ class DemoCollector:
         fps: int = 20,
         seed: int = 42,
         obs_builder: ObservationBuilder | None = None,
+        task_id: str = "cube_reach_v1",
+        task_description: str = "Reach the red cube",
     ) -> None:
         self._policy = policy
         self._fps = fps
         self._seed = seed
         self._obs_builder = obs_builder if obs_builder is not None else _default_obs_builder()
+        self._task_id = task_id
+        self._task_description = task_description
 
     def collect(self, env_name: str, n_episodes: int) -> list[Episode]:
         """Run the scripted policy for n_episodes and return collected data.
@@ -186,6 +208,8 @@ class DemoCollector:
                     observations=ep_obs,
                     actions=ep_actions,
                     rewards=ep_rewards,
+                    task_id=self._task_id,
+                    task_description=self._task_description,
                     success=success,
                 )
             )
@@ -216,18 +240,11 @@ class DemoCollector:
             raise RuntimeError("lerobot is required for dataset export. Install with: uv sync")
 
         builder = self._obs_builder
-        features: dict[str, Any] = {
-            "observation.state": {
-                "dtype": "float32",
-                "shape": (builder.state_dim,),
-                "names": builder.state_names,
-            },
-            "action": {
-                "dtype": "float32",
-                "shape": (8,),
-                "names": None,
-            },
-        }
+        features: dict[str, Any] = build_features(
+            state_dim=builder.state_dim,
+            state_names=builder.state_names,
+            action_dim=8,
+        )
 
         dataset = LeRobotDataset.create(
             repo_id=repo_id,
@@ -238,15 +255,19 @@ class DemoCollector:
 
         total_frames = 0
         for ep_idx, episode in enumerate(episodes):
+            success_arr = np.array([episode.success], dtype=np.bool_)
             for obs, action in zip(episode.observations, episode.actions, strict=False):
                 dataset.add_frame(
                     {
-                        "observation.state": builder.build(obs),
-                        "action": np.asarray(action, dtype=np.float32),
+                        OBS_STATE_KEY: builder.build(obs),
+                        ACTION_KEY: np.asarray(action, dtype=np.float32),
+                        TASK_ID_KEY: episode.task_id,
+                        TASK_DESCRIPTION_KEY: episode.task_description,
+                        SUCCESS_KEY: success_arr,
                     }
                 )
                 total_frames += 1
-            dataset.save_episode(task="Reach the cube")
+            dataset.save_episode(task=episode.task_description)
             logger.debug(f"Saved episode {ep_idx + 1}/{len(episodes)}")
 
         logger.info(f"Dataset saved to {root} | episodes={len(episodes)} | frames={total_frames}")

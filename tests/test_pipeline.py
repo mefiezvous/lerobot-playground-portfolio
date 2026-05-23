@@ -92,11 +92,15 @@ class TestEpisode:
             observations=[_make_obs()],
             actions=[np.zeros(8, dtype=np.float32)],
             rewards=[0.5],
+            task_id="cube_reach_v1",
+            task_description="Reach the red cube",
             success=True,
         )
         assert len(ep.observations) == 1
         assert len(ep.actions) == 1
         assert ep.success is True
+        assert ep.task_id == "cube_reach_v1"
+        assert ep.task_description == "Reach the red cube"
 
 
 # ---------------------------------------------------------------------------
@@ -167,6 +171,8 @@ class TestDemoCollector:
                 observations=[_make_obs()] * 5,
                 actions=[np.zeros(8, dtype=np.float32)] * 5,
                 rewards=[0.1] * 5,
+                task_id="cube_reach_v1",
+                task_description="Reach the red cube",
                 success=False,
             )
             for _ in range(3)
@@ -195,6 +201,8 @@ class TestDemoCollector:
                 observations=[_make_obs()] * steps_per_ep,
                 actions=[np.zeros(8, dtype=np.float32)] * steps_per_ep,
                 rewards=[0.2] * steps_per_ep,
+                task_id="cube_reach_v1",
+                task_description="Reach the red cube",
                 success=True,
             )
             for _ in range(n_episodes)
@@ -220,6 +228,8 @@ class TestDemoCollector:
                 observations=[_make_obs()],
                 actions=[np.zeros(8, dtype=np.float32)],
                 rewards=[0.0],
+                task_id="cube_reach_v1",
+                task_description="Reach the red cube",
                 success=False,
             )
         ]
@@ -245,6 +255,8 @@ class TestDemoCollector:
                 observations=[_make_obs()],
                 actions=[np.zeros(8, dtype=np.float32)],
                 rewards=[0.0],
+                task_id="cube_reach_v1",
+                task_description="Reach the red cube",
                 success=False,
             )
         ]
@@ -271,6 +283,8 @@ class TestDemoCollector:
                 observations=[obs],
                 actions=[np.zeros(8, dtype=np.float32)],
                 rewards=[0.0],
+                task_id="cube_reach_v1",
+                task_description="Reach the red cube",
                 success=False,
             )
         ]
@@ -289,3 +303,84 @@ class TestDemoCollector:
         assert state.shape == (16,)
         # indices 13-15 are ee_to_cube
         np.testing.assert_allclose(state[13], -0.3, atol=1e-6)
+
+    # ------------------------------------------------------------------
+    # Task metadata + enriched schema (Phase 3-B)
+    # ------------------------------------------------------------------
+
+    def test_collector_stamps_task_metadata_on_episodes(self) -> None:
+        """Every collected ``Episode`` carries the collector's task id/description."""
+        env = _make_mp_env(n_steps_until_done=3)
+        policy = ScriptedPolicy(gain=2.0, noise_scale=0.0)
+        collector = DemoCollector(
+            policy=policy,
+            fps=20,
+            task_id="my_task_v2",
+            task_description="Do the thing",
+        )
+
+        with patch("playground.data.pipeline._resolve_env", return_value=env):
+            episodes = collector.collect(env_name="mujoco_pgnd:cube_reach_v1", n_episodes=2)
+
+        assert len(episodes) == 2
+        for ep in episodes:
+            assert ep.task_id == "my_task_v2"
+            assert ep.task_description == "Do the thing"
+
+    def test_collector_default_task_metadata_is_cube_reach(self) -> None:
+        """Default constructor stamps the CubeReach task metadata."""
+        env = _make_mp_env(n_steps_until_done=2)
+        collector = DemoCollector(policy=ScriptedPolicy(noise_scale=0.0), fps=20)
+
+        with patch("playground.data.pipeline._resolve_env", return_value=env):
+            episodes = collector.collect(env_name="mujoco_pgnd:cube_reach_v1", n_episodes=1)
+
+        assert episodes[0].task_id == "cube_reach_v1"
+        assert episodes[0].task_description == "Reach the red cube"
+
+    def test_to_lerobot_dataset_uses_enriched_schema(self, tmp_path: Path) -> None:
+        """``features`` carries the enriched schema and frames carry task/success."""
+        episodes = [
+            Episode(
+                observations=[_make_obs(), _make_obs()],
+                actions=[np.zeros(8, dtype=np.float32)] * 2,
+                rewards=[0.0, 0.0],
+                task_id="cube_reach_v1",
+                task_description="Reach the red cube",
+                success=True,
+            )
+        ]
+        collector = DemoCollector(policy=ScriptedPolicy(), fps=20)
+
+        mock_dataset = MagicMock()
+        with patch("playground.data.pipeline.LeRobotDataset") as lrd_mock:
+            lrd_mock.create.return_value = mock_dataset
+            collector.to_lerobot_dataset(
+                episodes=episodes,
+                repo_id="mefiezvous/test-dataset",
+                root=tmp_path,
+            )
+
+        # Features dict carries the enriched schema keys with the right dtypes.
+        features = lrd_mock.create.call_args.kwargs["features"]
+        for key in ("observation.state", "action", "task_id", "task_description", "success"):
+            assert key in features, f"missing feature key: {key}"
+        assert features["task_id"]["dtype"] == "string"
+        assert features["task_description"]["dtype"] == "string"
+        assert features["success"]["dtype"] == "bool"
+        assert features["success"]["shape"] == (1,)
+
+        # Every add_frame payload carries task labels and a bool success array.
+        assert mock_dataset.add_frame.call_count == 2
+        for call in mock_dataset.add_frame.call_args_list:
+            payload = call[0][0]
+            assert payload["task_id"] == "cube_reach_v1"
+            assert payload["task_description"] == "Reach the red cube"
+            success_val = payload["success"]
+            assert isinstance(success_val, np.ndarray)
+            assert success_val.dtype == np.bool_
+            assert success_val.shape == (1,)
+            assert success_val[0] is np.True_ or bool(success_val[0]) is True
+
+        # save_episode receives the per-episode task description.
+        mock_dataset.save_episode.assert_called_once_with(task="Reach the red cube")
