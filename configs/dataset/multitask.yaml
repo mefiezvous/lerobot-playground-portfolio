@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 Arthur Mouraud
+# SPDX-License-Identifier: Apache-2.0
+repo_id: mefiezvous/multitask-v1
+root: null
+filter:
+  _target_: mlcore.data.filter.SuccessOnlyFilter
+sampler:
+  _target_: mlcore.data.sampler.MultiTaskBalancedSampler
+  tasks_per_batch: 4
+  batch_size: 64
+delta_timestamps:
+  observation.state: [-0.1, 0.0]
+  action: [0.0, 0.02, 0.04, 0.06]

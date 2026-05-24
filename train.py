@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any
 
 import hydra
+from hydra.utils import get_class, instantiate
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 from torch.utils.data import DataLoader
@@ -39,19 +40,39 @@ except ImportError:
     LeRobotDataset = None  # type: ignore[assignment,misc]
     _LEROBOT_AVAILABLE = False
 
-from playground.policies.act_wrapper import ACTWrapper
-from playground.policies.diffusion_wrapper import DiffusionWrapper
 from playground.training.trainer import PolicyWrapper, Trainer
 
 
 def _build_policy(policy_cfg: DictConfig, device: str) -> PolicyWrapper:
-    """Instantiate the appropriate policy wrapper from the Hydra policy config."""
-    name: str = policy_cfg.name
-    if name == "act":
-        return ACTWrapper(policy_cfg, device=device)
-    if name == "diffusion":
-        return DiffusionWrapper(policy_cfg, device=device)
-    raise ValueError(f"Unknown policy name: '{name}'. Expected 'act' or 'diffusion'.")
+    """Instantiate the appropriate policy wrapper via Hydra ``_target_`` resolution.
+
+    The ``_target_`` field on the policy sub-config selects the wrapper class
+    (e.g. ``playground.policies.act_wrapper.ACTWrapper``). The wrapper receives
+    the full ``policy_cfg`` as its ``cfg`` argument so it can read fields such
+    as ``n_obs_steps``, ``input_shapes``, ``pretrained_repo``, etc.
+
+    Args:
+        policy_cfg: The ``cfg.policy`` sub-config (must contain ``_target_``).
+        device: PyTorch device string (e.g. ``"cpu"``, ``"cuda"``).
+
+    Raises:
+        ValueError: If ``_target_`` is missing or cannot be resolved.
+    """
+    target: str | None = policy_cfg.get("_target_")
+    if not target:
+        raise ValueError(
+            "Policy config is missing the '_target_' field. "
+            "Add e.g. '_target_: playground.policies.act_wrapper.ACTWrapper' "
+            "to your configs/policy/<name>.yaml under the 'policy:' block."
+        )
+    try:
+        wrapper_cls = get_class(target)
+    except (ImportError, ModuleNotFoundError, AttributeError, ValueError) as exc:
+        raise ValueError(
+            f"Failed to resolve policy '_target_' = '{target}'. "
+            f"Ensure the dotted path points to an importable class. ({exc})"
+        ) from exc
+    return wrapper_cls(policy_cfg, device=device)  # type: ignore[no-any-return]
 
 
 def _build_dataloader(
@@ -62,9 +83,18 @@ def _build_dataloader(
 ) -> DataLoader[Any]:
     """Load a LeRobotDataset and wrap it in a DataLoader with temporal chunking.
 
+    Optionally applies a Hydra-instantiated ``filter`` (e.g.
+    :class:`mlcore.data.filter.SuccessOnlyFilter`) to the dataset and/or a
+    Hydra-instantiated ``sampler`` (e.g.
+    :class:`mlcore.data.sampler.MultiTaskBalancedSampler`) to the
+    DataLoader. Both keys are optional — configs that omit them keep the
+    previous behaviour (full dataset, shuffled DataLoader).
+
     Args:
-        dataset_cfg: Dataset config (repo_id, root).
-        policy_cfg: Policy config providing n_obs_steps and chunk_size/n_action_steps.
+        dataset_cfg: Dataset config (``repo_id``, ``root``, optional
+            ``filter``, optional ``sampler``).
+        policy_cfg: Policy config providing ``n_obs_steps`` and
+            ``chunk_size`` / ``n_action_steps``.
         batch_size: Training batch size.
         fps: Environment control frequency (Hz) for timestamp computation.
     """
@@ -80,11 +110,26 @@ def _build_dataloader(
     }
 
     root: Path | None = Path(dataset_cfg.root) if dataset_cfg.get("root") else None
-    dataset = LeRobotDataset(
+    dataset: Any = LeRobotDataset(
         dataset_cfg.repo_id,
         root=root,
         delta_timestamps=delta_timestamps,
     )
+
+    filter_cfg: Any = dataset_cfg.get("filter")
+    if filter_cfg is not None:
+        filter_fn: Any = instantiate(filter_cfg)
+        logger.info("Applying dataset filter: {}", type(filter_fn).__name__)
+        dataset = filter_fn(dataset)
+
+    sampler_cfg: Any = dataset_cfg.get("sampler")
+    if sampler_cfg is not None:
+        sampler: Any = instantiate(sampler_cfg, dataset=dataset, _convert_="object")
+        logger.info("Using custom sampler: {}", type(sampler).__name__)
+        return DataLoader(
+            dataset, batch_size=batch_size, sampler=sampler, drop_last=True
+        )
+
     return DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
 
