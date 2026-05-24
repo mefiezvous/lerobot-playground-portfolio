@@ -11,7 +11,7 @@ Code complete; awaiting first full Kaggle training run + HF Hub publish.
 ## Stable surface (v0.1)
 
 - `playground.envs.cube_reach_v1.CubeReachV1` — custom env (dense reach reward, 200-step episodes)
-- `playground.data.pipeline` — `ScriptedPolicy`, `DemoCollector`, `Episode` (LeRobotDataset v3.0)
+- `playground.data.pipeline` — `ScriptedPolicy`, `Episode` (LeRobotDataset v3.0). `DemoCollector` deprecated — use root-level `collect.py` (`mlcore.collection.*`).
 - `playground.policies.act_wrapper.ACTWrapper` (re-export from `ml-core`)
 - `playground.policies.diffusion_wrapper.DiffusionWrapper` (re-export from `ml-core`)
 - `playground.training.trainer.Trainer` (re-export, MLflow + checkpoint resume + HF Hub push)

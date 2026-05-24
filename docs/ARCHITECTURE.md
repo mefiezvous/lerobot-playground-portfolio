@@ -8,8 +8,8 @@ demo collector, Hydra configs, train/eval entrypoints, visualisation).
 ## Pipeline overview
 
 ```
-env (CubeReachV1)
-  └─> scripted policy + DemoCollector
+env (cube_reach_v1)
+  └─> collect.py CLI (mlcore.collection.ScriptedCollector + HubSink)
         └─> LeRobotDataset v3.0  (Parquet + MP4)
               └─> Trainer (Hydra + MLflow + HF Hub push)
                     └─> Policy checkpoint (ACT or Diffusion)
@@ -24,7 +24,7 @@ Every step is Hydra-configurable and reproducible from `configs/`.
 lerobot-playground-portfolio/
 ├── src/playground/
 │   ├── envs/         cube_reach_v1.py — Franka Panda dense reach reward
-│   ├── data/         pipeline.py — ScriptedPolicy, DemoCollector, Episode
+│   ├── data/         pipeline.py — ScriptedPolicy, DemoCollector (deprecated; use collect.py)
 │   ├── policies/     act_wrapper.py, diffusion_wrapper.py (re-export from ml-core)
 │   ├── training/     trainer.py — re-export from ml-core (MLflow + checkpoints + HF push)
 │   ├── eval/         evaluator.py — re-export from ml-core + EvaluatorWithViz
@@ -54,7 +54,7 @@ Registered with `mujoco_playground` via `register_environment`.
 
 | File | Provides |
 |---|---|
-| `pipeline.py` | `ScriptedPolicy`, `DemoCollector`, `Episode`, 16-dim state builder (ee 3 + cube 3 + joints 7 + delta 3) |
+| `pipeline.py` | `ScriptedPolicy`, `Episode`, 16-dim state builder. `DemoCollector` is **deprecated** — use root-level `collect.py` CLI (`mlcore.collection.*`). |
 
 Output target: `LeRobotDataset` v3.0 (multi-episode Parquet + MP4) — repo_id `mefiezvous/cube-reach-v1-dataset`.
 

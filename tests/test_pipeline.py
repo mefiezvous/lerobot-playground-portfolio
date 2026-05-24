@@ -116,7 +116,7 @@ class TestDemoCollector:
         collector = DemoCollector(policy=policy, fps=20)
 
         with patch("playground.data.pipeline._resolve_env", return_value=env):
-            episodes = collector.collect(env_name="mujoco_pgnd:cube_reach_v1", n_episodes=3)
+            episodes = collector.collect(env_name="cube_reach_v1", n_episodes=3)
 
         assert len(episodes) == 3
 
@@ -127,7 +127,7 @@ class TestDemoCollector:
         collector = DemoCollector(policy=policy, fps=20)
 
         with patch("playground.data.pipeline._resolve_env", return_value=env):
-            episodes = collector.collect(env_name="mujoco_pgnd:cube_reach_v1", n_episodes=1)
+            episodes = collector.collect(env_name="cube_reach_v1", n_episodes=1)
 
         ep = episodes[0]
         assert len(ep.observations) == n_steps
@@ -140,7 +140,7 @@ class TestDemoCollector:
         collector = DemoCollector(policy=policy, fps=20)
 
         with patch("playground.data.pipeline._resolve_env", return_value=env):
-            episodes = collector.collect(env_name="mujoco_pgnd:cube_reach_v1", n_episodes=1)
+            episodes = collector.collect(env_name="cube_reach_v1", n_episodes=1)
 
         # Last step info has success=True (from _make_mp_env)
         assert episodes[0].success is True
@@ -320,7 +320,7 @@ class TestDemoCollector:
         )
 
         with patch("playground.data.pipeline._resolve_env", return_value=env):
-            episodes = collector.collect(env_name="mujoco_pgnd:cube_reach_v1", n_episodes=2)
+            episodes = collector.collect(env_name="cube_reach_v1", n_episodes=2)
 
         assert len(episodes) == 2
         for ep in episodes:
@@ -333,7 +333,7 @@ class TestDemoCollector:
         collector = DemoCollector(policy=ScriptedPolicy(noise_scale=0.0), fps=20)
 
         with patch("playground.data.pipeline._resolve_env", return_value=env):
-            episodes = collector.collect(env_name="mujoco_pgnd:cube_reach_v1", n_episodes=1)
+            episodes = collector.collect(env_name="cube_reach_v1", n_episodes=1)
 
         assert episodes[0].task_id == "cube_reach_v1"
         assert episodes[0].task_description == "Reach the red cube"

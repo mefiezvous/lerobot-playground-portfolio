@@ -47,6 +47,18 @@ uv run python eval.py +eval.checkpoint_path=checkpoints/checkpoint_00010000.ckpt
 Reproducible by construction: fixed seeds, Hydra configs versioned in `configs/`,
 dataset hash + full config logged to MLflow on every run.
 
+## Add a robot
+
+Full tutorial: [robotics-platform-template/docs/ADD_A_ROBOT.md](../robotics-platform-template/docs/ADD_A_ROBOT.md).
+Three-command summary:
+
+```bash
+uv run python -m playground.scripts.add_robot <name> --n-joints N --action-dim D \
+    --obs-keys "ee_pos,target_pos,joints" --task-description "..."
+uv run python collect.py env=<name> dataset=<name> episodes=200 push_to_hub=true
+uv run python train.py   env=<name> policy=act
+```
+
 ## Documentation
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — pipeline overview, module layout, dependencies

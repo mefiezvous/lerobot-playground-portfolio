@@ -1,0 +1,12 @@
+# @package _global_
+# SPDX-FileCopyrightText: 2026 Arthur Mouraud
+# SPDX-License-Identifier: Apache-2.0
+defaults:
+  - /env: cube_reach_v1
+  - /dataset: cube_reach_v1
+  - _self_
+
+episodes: 200
+policy_type: scripted
+push_to_hub: false
+seed: 42

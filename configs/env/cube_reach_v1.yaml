@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # @package _global_
 env:
-  name: CubeReachV1
+  name: cube_reach_v1
+  mujoco_playground_id: CubeReachV1
   fps: 20
   episode_length: 200
   success_threshold: 0.05

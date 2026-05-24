@@ -1,9 +1,16 @@
 # SPDX-FileCopyrightText: 2026 Arthur Mouraud
 # SPDX-License-Identifier: Apache-2.0
-"""Demo data pipeline: scripted policy → episode collection → LeRobotDataset v3.0."""
+"""Demo data pipeline: scripted policy → episode collection → LeRobotDataset v3.0.
+
+DEPRECATED — use ``mlcore.collection.*`` via the root-level ``collect.py``
+Hydra CLI instead. ``DemoCollector`` and ``ScriptedPolicy`` are kept only
+because legacy tests still import them; both will be removed once the
+migration to ``collect.py`` is complete.
+"""
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -51,7 +58,7 @@ def _resolve_env(env_name: str) -> Any:
 
     Args:
         env_name: Either a namespaced registry key (e.g.
-            ``"mujoco_pgnd:cube_reach_v1"``) or a raw mujoco_playground env name.
+            ``"cube_reach_v1"``) or a raw mujoco_playground env name.
 
     Returns:
         An :class:`~robotics_platform.envs.interfaces.EnvAdapter` instance.
@@ -164,6 +171,13 @@ class DemoCollector:
         task_id: str = "cube_reach_v1",
         task_description: str = "Reach the red cube",
     ) -> None:
+        warnings.warn(
+            "DemoCollector is deprecated — use mlcore.collection.* via the "
+            "root-level collect.py Hydra CLI. This class will be removed "
+            "after the migration is complete.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._policy = policy
         self._fps = fps
         self._seed = seed
@@ -176,7 +190,7 @@ class DemoCollector:
 
         Args:
             env_name: EnvAdapter registry key (e.g.
-                ``"mujoco_pgnd:cube_reach_v1"``) or legacy bare mujoco_playground
+                ``"cube_reach_v1"``) or legacy bare mujoco_playground
                 env name (auto-wrapped as a fallback).
             n_episodes: Number of episodes to collect.
 
