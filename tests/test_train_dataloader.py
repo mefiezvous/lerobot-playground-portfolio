@@ -28,9 +28,7 @@ def test_build_dataloader_no_filter_no_sampler_keeps_legacy_behaviour() -> None:
         patch("train.DataLoader", return_value=dl_instance) as mock_dl,
         patch("train.instantiate") as mock_instantiate,
     ):
-        result = train_module._build_dataloader(
-            dataset_cfg, policy_cfg, batch_size=8, fps=20
-        )
+        result = train_module._build_dataloader(dataset_cfg, policy_cfg, batch_size=8, fps=20)
 
     mock_ds_cls.assert_called_once()
     mock_instantiate.assert_not_called()
@@ -191,10 +189,7 @@ def test_multitask_dataset_config_is_well_formed() -> None:
     from pathlib import Path
 
     cfg = OmegaConf.load(
-        Path(__file__).resolve().parent.parent
-        / "configs"
-        / "dataset"
-        / "multitask.yaml"
+        Path(__file__).resolve().parent.parent / "configs" / "dataset" / "multitask.yaml"
     )
     assert cfg.filter._target_ == "mlcore.data.filter.SuccessOnlyFilter"
     assert cfg.sampler._target_ == "mlcore.data.sampler.MultiTaskBalancedSampler"

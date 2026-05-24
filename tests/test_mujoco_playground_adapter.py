@@ -44,15 +44,11 @@ class TestMujocoPlaygroundAdapterContract:
     """Verify the adapter implements the EnvAdapter Protocol."""
 
     def test_instance_is_envadapter(self) -> None:
-        adapter = MujocoPlaygroundAdapter(
-            env_name="CubeReachV1", task_description="Reach the cube"
-        )
+        adapter = MujocoPlaygroundAdapter(env_name="CubeReachV1", task_description="Reach the cube")
         assert isinstance(adapter, EnvAdapter)
 
     def test_task_description_returned_unchanged(self) -> None:
-        adapter = MujocoPlaygroundAdapter(
-            env_name="CubeReachV1", task_description="Reach the cube"
-        )
+        adapter = MujocoPlaygroundAdapter(env_name="CubeReachV1", task_description="Reach the cube")
         assert adapter.task_description == "Reach the cube"
 
 

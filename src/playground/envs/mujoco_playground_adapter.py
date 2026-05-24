@@ -39,8 +39,7 @@ def _load_mp_env(env_name: str) -> Any:
         import mujoco_playground as mp
     except (ImportError, OSError) as exc:  # pragma: no cover - env-specific
         raise RuntimeError(
-            "mujoco_playground is required for MujocoPlaygroundAdapter. "
-            "Install with: uv sync"
+            "mujoco_playground is required for MujocoPlaygroundAdapter. Install with: uv sync"
         ) from exc
     return mp.registry.load(env_name)
 
@@ -75,9 +74,7 @@ class MujocoPlaygroundAdapter:
     # ------------------------------------------------------------------
     # EnvAdapter Protocol
     # ------------------------------------------------------------------
-    def reset(
-        self, seed: int
-    ) -> tuple[dict[str, NDArray[np.floating[Any]]], dict[str, Any]]:
+    def reset(self, seed: int) -> tuple[dict[str, NDArray[np.floating[Any]]], dict[str, Any]]:
         """Reset the underlying env and cache obs keys for introspection."""
         env = self._ensure_env()
         obs, info = env.reset(seed=seed)

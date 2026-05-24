@@ -43,9 +43,7 @@ def test_build_policy_diffusion_uses_target() -> None:
     fake_cls = MagicMock(return_value=fake_instance)
     with patch("train.get_class", return_value=fake_cls) as mock_get_class:
         policy = train_module._build_policy(cfg, device="cpu")
-    mock_get_class.assert_called_once_with(
-        "playground.policies.diffusion_wrapper.DiffusionWrapper"
-    )
+    mock_get_class.assert_called_once_with("playground.policies.diffusion_wrapper.DiffusionWrapper")
     fake_cls.assert_called_once_with(cfg, device="cpu")
     assert policy is fake_instance
 
@@ -63,9 +61,7 @@ def test_build_policy_missing_target_raises() -> None:
 def test_build_policy_invalid_target_raises() -> None:
     import train as train_module
 
-    cfg = OmegaConf.create(
-        {"_target_": "nonexistent.module.NotAClass", "name": "act"}
-    )
+    cfg = OmegaConf.create({"_target_": "nonexistent.module.NotAClass", "name": "act"})
     with pytest.raises(ValueError, match="Failed to resolve policy '_target_'"):
         train_module._build_policy(cfg, device="cpu")
 
@@ -75,9 +71,7 @@ def test_act_policy_config_has_target() -> None:
     """The shipped act.yaml must declare a _target_ for pluggable instantiation."""
     from pathlib import Path
 
-    cfg = OmegaConf.load(
-        Path(__file__).resolve().parent.parent / "configs" / "policy" / "act.yaml"
-    )
+    cfg = OmegaConf.load(Path(__file__).resolve().parent.parent / "configs" / "policy" / "act.yaml")
     assert cfg.policy._target_ == "playground.policies.act_wrapper.ACTWrapper"
 
 
@@ -89,9 +83,7 @@ def test_diffusion_policy_config_has_target() -> None:
     cfg = OmegaConf.load(
         Path(__file__).resolve().parent.parent / "configs" / "policy" / "diffusion.yaml"
     )
-    assert (
-        cfg.policy._target_ == "playground.policies.diffusion_wrapper.DiffusionWrapper"
-    )
+    assert cfg.policy._target_ == "playground.policies.diffusion_wrapper.DiffusionWrapper"
 
 
 @pytest.mark.unit
