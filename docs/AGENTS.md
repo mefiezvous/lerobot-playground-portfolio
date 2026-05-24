@@ -1,55 +1,48 @@
-# Sub-Agents
+# Agents — lerobot-playground-portfolio
 
-This file defines specialized sub-agents for Claude Code. Invoke them by name.
+Claude Code skills, slash commands, and sub-agent conventions used in this repo. All assets
+live under `.claude/` and are checked into the repo (no machine-local state).
 
-## lerobot-expert
+## Skills
 
-**Role:** LeRobot ecosystem specialist — dataset creation, policy loading, Hub interactions.
+Reusable domain knowledge bundles in `.claude/skills/<name>/SKILL.md`. Invoked by Claude Code
+when a task matches the skill's trigger.
 
-**Trigger:** Any task involving `LeRobotDataset`, ACT, DiffusionPolicy, SmolVLA, `push_to_hub`, or `from_pretrained`.
+| Skill | Scope |
+|---|---|
+| `lerobot-patterns` | LeRobotDataset v3.0 format, policy loading, `push_to_hub`, `from_pretrained` |
+| `mujoco-playground` | Custom env registration, Warp/JAX backend, vectorized rollouts |
+| `kaggle-deployment` | 2×T4 setup, 9 h session resume, Kaggle secrets, notebook patterns |
 
-**Behavior:**
-- Always use lerobot 0.5.1 API (v3.0 dataset format: Parquet + MP4)
-- Check the official LeRobot repo for current API before proposing code
-- Never reference `_private/` or proprietary content
-- Prefer `lerobot.common.datasets.LeRobotDataset` patterns over custom data classes
+Edit a skill by updating its `SKILL.md` — the trigger and behaviour sections drive Claude Code's
+selection logic.
 
-**Constraints:**
-- Only push to PUBLIC HF Hub repos (`mefiezvous/*` with `private=False`)
-- Always log dataset hash to MLflow alongside training runs
+## Slash commands
 
----
+Project-scoped prompts in `.claude/commands/<name>.md`. Invoked as `/<name>`.
 
-## eval-runner
+| Command | Purpose |
+|---|---|
+| `/new-policy` | Scaffold a new policy wrapper (test-first, re-export from `ml-core`, Hydra config) |
+| `/train-on-kaggle` | Walk through the Kaggle notebook pipeline (secrets, 2×T4, resume, HF push) |
+| `/ip-check` | Run the anti-leak audit: forbidden patterns + SPDX header verification |
 
-**Role:** Benchmark evaluation — reproducible, statistically sound results.
+## Sub-agent conventions
 
-**Trigger:** Any task involving `eval.py`, success rate computation, rollout evaluation, or benchmark reports.
+This repo currently does not declare named sub-agents under `.claude/agents/`. When spawning
+a sub-agent for a task, follow these conventions:
 
-**Behavior:**
-- Always use N≥50 rollouts × 3 seeds minimum
-- Always compute bootstrap CI 95% (n_bootstrap=10_000) on success_rate
-- Output both `eval_report.json` and `eval_report.html`
-- Use `@pytest.mark.gpu` to skip GPU-only eval tests in CI
+| Role | Trigger | Constraints |
+|---|---|---|
+| LeRobot expert | Tasks touching `LeRobotDataset`, ACT, Diffusion, SmolVLA, `push_to_hub`, `from_pretrained` | Use lerobot 0.5.1 API only; only push to public HF Hub repos under `mefiezvous/*` |
+| Eval runner | Tasks touching `eval.py`, success-rate computation, benchmark reports | N≥50 rollouts × 3 seeds; bootstrap CI 95% (n_bootstrap=10000); fixed seeds logged to MLflow |
+| IP guardian | Tasks touching licensing, layer boundaries, pre-commit hook, releases, Hub pushes | Run audit before release; block on FAIL — no exceptions |
 
-**Constraints:**
-- Never report results without confidence intervals
-- Seeds must be fixed and logged (MLflow param `eval_seeds`)
+These conventions are enforced through skills, commands, and the anti-leak pre-commit hook
+rather than through explicit agent declarations.
 
----
+## Configuration
 
-## ip-guardian
-
-**Role:** IP protection — pre-commit audit, SPDX header verification, cross-layer leak detection.
-
-**Trigger:** Any task involving licensing, layer boundaries, pre-commit hook updates, releases, or publishing.
-
-**Behavior:**
-- Run grep audit before any release or Hub push
-- Check SPDX headers in all modified `.py` files
-- Verify no `_private/`, `my-robot-stack/`, `LicenseRef-Proprietary`, or `All Rights Reserved` appears in public/template source
-- Report PASS/FAIL for each pattern category
-
-**Constraints:**
-- Block any release if audit fails — no exceptions
-- SPDX header format: `# SPDX-FileCopyrightText: 2026 Arthur Mouraud` + `# SPDX-License-Identifier: Apache-2.0`
+`.claude/settings.json` declares the project-level Claude Code configuration (permissions,
+allowed tools). Keep it minimal and reviewable — anything reflexive (auto-actions on every
+turn) belongs in user-level settings, not the repo.
