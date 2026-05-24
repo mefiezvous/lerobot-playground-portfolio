@@ -44,9 +44,9 @@ def test_collect_help_runs() -> None:
 def test_env_cfg_helper_handles_double_wrap() -> None:
     """``_env_cfg`` must transparently unwrap the ``cfg.env.env`` legacy shape."""
     sys.path.insert(0, str(_REPO_ROOT))
-    import collect
-
     from omegaconf import OmegaConf
+
+    import collect
 
     # Plain shape: cfg.env.name present → returned as-is.
     plain = OmegaConf.create({"env": {"name": "foo", "fps": 20}})
