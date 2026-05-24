@@ -1,38 +1,27 @@
-# Claude Code — lerobot-playground-portfolio
+# CLAUDE.md — lerobot-playground-portfolio
 
-## Project Identity
-Public portfolio: LeRobot + MuJoCo Playground on free-tier Kaggle GPUs (2×T4).
-License: Apache-2.0. Python 3.12+. Author: Arthur Mouraud (mefiezvous).
+## Identity
+Public portfolio (Apache-2.0): LeRobot + MuJoCo Playground policies trained on free-tier Kaggle GPUs (2×T4). Python 3.12+. Author: Arthur Mouraud (mefiezvous).
 
 ## Stack
-- lerobot==0.5.1 (LeRobotDataset v3.0, ACT, DiffusionPolicy)
-- mujoco==3.5.0 + mujoco-mjx==3.8.0 + mujoco_playground==0.2.0 (Warp backend)
-- stable-baselines3==2.8.0, hydra-core==1.3.2, mlflow==3.12.0, peft==0.19.1, loguru>=0.7
-- HAL layer: robotics-platform-template (local path dep at ../../robotics-platform-template)
+- `lerobot==0.5.1` · `mujoco==3.8.0` / `mujoco-mjx==3.8.0` · `mujoco_playground==0.2.0`
+- `stable-baselines3==2.8.0` · `hydra-core==1.3.2` · `mlflow==3.12.0` · `peft==0.19.1`
+- Path deps: `robotics-platform-template` (HAL), `ml-core` (algorithms)
 
-## Absolute Rules (never violate)
-1. NEVER reference `_private/`, `my-robot-stack/`, or any proprietary content
-2. NEVER use `LicenseRef-Proprietary` or `All Rights Reserved` in any file
-3. SPDX header required at top of every .py file:
-   `# SPDX-FileCopyrightText: 2026 Arthur Mouraud`
-   `# SPDX-License-Identifier: Apache-2.0`
-4. No hardcoded values — use Hydra configs or pathlib.Path
-5. No print() — use loguru: `from loguru import logger`
-6. No os.environ direct access — gate secrets via Hydra or env-var checks
-
-## Workflow
-- Plan mode for any change touching 3+ files
-- TDD: write test first, then implementation
-- Conventional commits: feat:, fix:, docs:, chore:, refactor:, test:
-- Feature branches only — no direct commits to main
-- PRs required even when working solo (portfolio signal)
+## Critical Rules
+1. NEVER reference `_private/`, `my-robot-stack/`, or proprietary content.
+2. NEVER use `LicenseRef-Proprietary` or `All Rights Reserved`.
+3. SPDX header on every `.py`:
+   `# SPDX-FileCopyrightText: 2026 Arthur Mouraud` / `# SPDX-License-Identifier: Apache-2.0`
+4. `from loguru import logger` — no `print()`.
+5. No hardcoded values — Hydra configs or `pathlib.Path`.
+6. No direct `os.environ` access.
 
 ## Code Standards
-- Type hints everywhere, mypy strict
-- Google-style docstrings for public API
-- Imports: stdlib → third-party → local (blank line between groups)
-- Coverage: 70% global minimum, 100% on platform.hal (from template)
-- Pytest markers: @pytest.mark.unit (default), @pytest.mark.integration, @pytest.mark.gpu
+- mypy strict, type hints everywhere.
+- TDD; pytest markers `@pytest.mark.unit` / `integration` / `gpu`.
+- Coverage 70% global, 100% on `robotics_platform.hal` (template).
+- Conventional commits, feature branches, PR even solo.
 
 ## Available Skills (invoke by name)
 - `lerobot-patterns` — LeRobotDataset v3.0, policy loading, Hub patterns
@@ -40,13 +29,16 @@ License: Apache-2.0. Python 3.12+. Author: Arthur Mouraud (mefiezvous).
 - `kaggle-deployment` — 2×T4 setup, 9h resume, Kaggle secrets, notebook patterns
 
 ## Available Commands
-- `/new-policy` — scaffold a new policy wrapper
-- `/train-on-kaggle` — generate Kaggle notebook for a training run
-- `/ip-check` — run ip-guardian audit on staged files
+- `/new-policy` · `/train-on-kaggle` · `/ip-check`
 
-## Architecture Pointer
-See ARCHITECTURE.md. HAL interfaces live in robotics-platform-template.
-Never add hardware-specific code here — it goes in the private layer.
+## Documentation enfant
+- [README.md](README.md) — quickstart, results, badges
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — 3-layer flow, modules, ADRs
+- [docs/ROADMAP.md](docs/ROADMAP.md) — forward-looking
+- [docs/AGENTS.md](docs/AGENTS.md) — sub-agents (lerobot-expert, eval-runner, ip-guardian)
+- [docs/IP_STRATEGY.md](docs/IP_STRATEGY.md) — layer separation, scope
+- [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) — workflow, IP rules, code standards
 
-## État du projet
-Voir **STATUS.md** — liste exhaustive de ce qui est fait et de ce qui reste à implémenter, mise à jour à chaque session.
+## Workspace context (non committé)
+- Cross-repo rules & memory : `../CLAUDE.md` racine workspace
+- État volatile (branche active, P0, incohérences) : `memory/project_state.md`
