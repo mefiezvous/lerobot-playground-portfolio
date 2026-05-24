@@ -170,9 +170,7 @@ def _render_spec_file(spec: RobotSpec) -> str:
     """)
 
 
-def _render_env_yaml(
-    spec: RobotSpec, fps: int, episode_length: int, task_description: str
-) -> str:
+def _render_env_yaml(spec: RobotSpec, fps: int, episode_length: int, task_description: str) -> str:
     payload = {
         "env": {
             "name": _class_name(spec.name),
@@ -250,7 +248,7 @@ def _append_registration(spec: RobotSpec, task_description: str, dry_run: bool) 
     snippet = _render_registration_snippet(spec, task_description)
     if dry_run:
         logger.info(f"[dry-run] would append registration to {_REGISTRATIONS_FILE}")
-        logger.info(f"          preview: @register(\"mujoco_pgnd:{spec.name}\")")
+        logger.info(f'          preview: @register("mujoco_pgnd:{spec.name}")')
         return "planned"
     if _registration_already_present(spec.name):
         logger.info(f"[skip] registration for {spec.name} already present")

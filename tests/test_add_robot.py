@@ -79,9 +79,7 @@ def _invoke(args: list[str], monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.unit
-def test_dry_run_writes_nothing(
-    monkeypatch: pytest.MonkeyPatch, cleanup_workspace: None
-) -> None:
+def test_dry_run_writes_nothing(monkeypatch: pytest.MonkeyPatch, cleanup_workspace: None) -> None:
     paths = _expected_paths()
     _invoke(
         [
