@@ -16,7 +16,7 @@ from robotics_platform.envs.registry import register
 from playground.envs.mujoco_playground_adapter import MujocoPlaygroundAdapter
 
 
-@register("mujoco_pgnd:cube_reach_v1")
+@register("cube_reach_v1")
 class CubeReachV1Adapter(MujocoPlaygroundAdapter):
     """Zero-arg adapter for the CubeReachV1 MuJoCo Playground env."""
 

@@ -1,0 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Arthur Mouraud
+# SPDX-License-Identifier: Apache-2.0
+repo_id: mefiezvous/cube-reach-v1-dataset
+root: data/cube_reach_v1
+task_id: cube_reach_v1

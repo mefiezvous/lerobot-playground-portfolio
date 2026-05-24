@@ -17,7 +17,7 @@ from robotics_platform.envs.interfaces import EnvAdapter
 from robotics_platform.envs.registry import EnvAdapterRegistry
 
 # Import side-effect — registers the cube_reach_v1 adapter under
-# "mujoco_pgnd:cube_reach_v1" in the EnvAdapterRegistry.
+# "cube_reach_v1" in the EnvAdapterRegistry.
 import playground.envs.registrations  # noqa: F401
 from playground.envs.mujoco_playground_adapter import MujocoPlaygroundAdapter
 
@@ -159,17 +159,17 @@ class TestMujocoPlaygroundAdapterObsKeysAndActionDim:
 @pytest.mark.unit
 class TestMujocoPlaygroundAdapterRegistry:
     def test_cube_reach_v1_registered_under_namespaced_name(self) -> None:
-        factory = EnvAdapterRegistry.get("mujoco_pgnd:cube_reach_v1")
+        factory = EnvAdapterRegistry.get("cube_reach_v1")
         # Factory must be callable with no args and return an EnvAdapter.
         instance = factory()
         assert isinstance(instance, EnvAdapter)
 
     def test_registered_factory_returns_mujoco_playground_adapter(self) -> None:
-        factory = EnvAdapterRegistry.get("mujoco_pgnd:cube_reach_v1")
+        factory = EnvAdapterRegistry.get("cube_reach_v1")
         instance = factory()
         assert isinstance(instance, MujocoPlaygroundAdapter)
 
     def test_registered_factory_has_expected_task_description(self) -> None:
-        factory = EnvAdapterRegistry.get("mujoco_pgnd:cube_reach_v1")
+        factory = EnvAdapterRegistry.get("cube_reach_v1")
         instance = factory()
         assert instance.task_description == "Reach the cube"

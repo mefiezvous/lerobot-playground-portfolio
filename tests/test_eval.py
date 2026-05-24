@@ -35,7 +35,7 @@ def test_eval_entrypoint_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
 
     cfg = OmegaConf.create(
         {
-            "env": {"name": "CubeReachV1"},
+            "env": {"name": "cube_reach_v1"},
             "policy": {"name": "act"},
             "training": {"device": "cpu", "checkpoint_dir": "checkpoints/"},
             "eval": {

@@ -27,8 +27,13 @@ from typing import Any
 import hydra
 from hydra.utils import get_class, instantiate
 from loguru import logger
+from mlcore.robots import get as get_robot_spec
+from mlcore.robots import validate_spec_against_env
 from omegaconf import DictConfig, OmegaConf
+from robotics_platform.envs.registry import EnvAdapterRegistry
 from torch.utils.data import DataLoader
+
+import playground.envs.registrations  # noqa: F401 — populates EnvAdapterRegistry
 
 try:
     from lerobot.common.datasets.lerobot_dataset import (  # type: ignore[import-untyped]
@@ -145,6 +150,20 @@ def main(cfg: DictConfig) -> None:
         f"steps={cfg.training.total_steps} device={cfg.training.device}"
     )
     logger.debug(f"Full config:\n{OmegaConf.to_yaml(cfg)}")
+
+    # Validate RobotSpec ↔ EnvAdapter shape before doing any heavy work.
+    # Note: instantiating the env (MuJoCo Playground sim) just for shape
+    # inspection is non-trivial, but it only runs once at startup — the cost
+    # is paid to guarantee fail-fast on misconfigured robots.
+    logger.info("Validating robot spec ↔ env for '{}'...", cfg.env.name)
+    _env_cls = EnvAdapterRegistry.get(cfg.env.name)
+    _env = _env_cls()
+    try:
+        _spec = get_robot_spec(cfg.env.name)
+        validate_spec_against_env(_spec, _env)
+    finally:
+        _env.close()
+    logger.info("Spec validation OK")
 
     policy = _build_policy(cfg.policy, device=cfg.training.device)
     dataloader = _build_dataloader(
