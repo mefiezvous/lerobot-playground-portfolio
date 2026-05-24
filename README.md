@@ -3,63 +3,59 @@
 [![CI](https://github.com/mefiezvous/lerobot-playground-portfolio/actions/workflows/ci.yaml/badge.svg)](https://github.com/mefiezvous/lerobot-playground-portfolio/actions)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
-[![HF Dataset](https://img.shields.io/badge/HF-dataset-orange.svg)](https://huggingface.co/datasets/mefiezvous/cube-reach-v1-dataset)
 
-> End-to-end robotics portfolio: custom MuJoCo Playground environments, ACT and Diffusion Policy
-> training, and benchmark evaluation — all running on free-tier Kaggle GPUs (2×T4).
+> LeRobot playground portfolio — imitation learning on MuJoCo Playground.
+> ACT + Diffusion Policy on `CubeReachV1`, trained on free-tier Kaggle GPUs (2×T4).
 
-## Quickstart
+## What this is
+
+A small, end-to-end portfolio repo demonstrating:
+- `playground.envs.cube_reach_v1.CubeReachV1` — custom MuJoCo Playground env (Franka Panda, dense reach reward)
+- ACT + Diffusion Policy via thin wrappers around `ml-core` policy implementations
+- Hydra-driven `train.py` / `eval.py` entrypoints with MLflow logging and checkpoint resume
+- LeRobotDataset v3.0 demo pipeline (scripted policy → episodes → Parquet + MP4)
+- HuggingFace Hub publishing for both datasets and trained models
+
+Everything runs locally (CPU smoke test) or on a single Kaggle session (2×T4, ~4 h).
+
+## Install
 
 ```bash
 git clone https://github.com/mefiezvous/lerobot-playground-portfolio
 cd lerobot-playground-portfolio
 uv sync
-uv run python -c "from playground.envs.cube_reach_v1 import CubeReachV1; print('OK')"
 ```
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](notebooks/01_quickstart.ipynb)
-[![Open In Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](notebooks/02_train_kaggle.ipynb)
+Path dependencies on the HAL (`robotics-platform-template`) and algorithms (`ml-core`) layers
+are resolved as editable installs via `[tool.uv.sources]`.
 
-## Notebooks
-
-| Notebook | Purpose |
-|---|---|
-| `notebooks/01_quickstart.ipynb` | Local collect-demo smoke test (CPU, ~30 s) |
-| `notebooks/02_train_kaggle.ipynb` | Train ACT / Diffusion on Kaggle 2×T4 (~4 h) |
-| `notebooks/03_evaluate.ipynb` | Load checkpoint, run `Evaluator`, plot rewards |
-| `notebooks/04_publish_hf.ipynb` | Push dataset + models to HuggingFace Hub |
-
-## Train / Eval CLI
+## Quickstart
 
 ```bash
-# Train ACT on Kaggle GPU config
-python train.py --config-name training/kaggle policy=act logging.run_name=kaggle_act_001
+# 1. Collect a few scripted demos (CPU, smoke test)
+uv run python -c "from playground.envs.cube_reach_v1 import CubeReachV1; print('OK')"
 
-# Evaluate a checkpoint
-python eval.py +eval.checkpoint_path=checkpoints/cube_reach_v1/act/checkpoint_00010000.ckpt
+# 2. Train ACT on the Kaggle profile (2×T4, 100 k steps)
+uv run python train.py --config-name training/kaggle policy=act \
+    logging.run_name=kaggle_act_001
+
+# 3. Evaluate a checkpoint (N=50 rollouts)
+uv run python eval.py +eval.checkpoint_path=checkpoints/checkpoint_00010000.ckpt \
+    +eval.n_episodes=50 logging.run_name=eval_run_001
 ```
 
-## Results
-
-| Policy | Environment | Success Rate | CI 95% |
-|---|---|---|---|
-| ACT | CubeReachV1 | TBD | TBD |
-| Diffusion Policy | CubeReachV1 | TBD | TBD |
-
-> Awaiting first Kaggle training run. See [docs/ROADMAP.md](docs/ROADMAP.md).
-
-## Reproducibility
-
-Fixed seeds. Dataset hash + Hydra config logged via MLflow on every run. Configs versioned in `configs/`. Notebooks are self-contained with install cells.
+Reproducible by construction: fixed seeds, Hydra configs versioned in `configs/`,
+dataset hash + full config logged to MLflow on every run.
 
 ## Documentation
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — 3-layer flow, modules, ADRs
-- [docs/ROADMAP.md](docs/ROADMAP.md) — current release status + v0.2 candidates
-- [docs/AGENTS.md](docs/AGENTS.md) — sub-agents
-- [docs/IP_STRATEGY.md](docs/IP_STRATEGY.md) — layer separation
-- [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) — workflow, code standards
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — pipeline overview, module layout, dependencies
+- [docs/ROADMAP.md](docs/ROADMAP.md) — forward-looking
+- [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) — workflow & strict rules
+- [docs/AGENTS.md](docs/AGENTS.md) — Claude Code skills & commands for this repo
+- [docs/IP_STRATEGY.md](docs/IP_STRATEGY.md) — layer separation, what does NOT belong here
 
 ## License
 
-Apache-2.0. Copyright 2026 Arthur Mouraud. HAL from [robotics-platform-template](https://github.com/mefiezvous/robotics-platform-template).
+Apache-2.0. See [LICENSE](LICENSE). Copyright 2026 Arthur Mouraud.
+HAL contracts from [robotics-platform-template](https://github.com/mefiezvous/robotics-platform-template).
