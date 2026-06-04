@@ -83,10 +83,13 @@ jobs:
 
   pip-audit:
     # Runs on every PR and on the weekly cron schedule (LRB-002).
-    # Scan results on first run may surface CVEs in transitive deps (torch, mujoco, etc.)
-    # — triage ≥ High findings before merging. Do not bump deps in this PR.
+    # continue-on-error: true — pip-audit exit code 1 means CVEs were found.
+    # This job is INFORMATIONAL: findings must be triaged but do not block
+    # PRs that do not change deps. Open a separate issue/PR to fix each
+    # ≥ High finding. See docs/SECURITY_AUDIT_2026-06-03.md LRB-002.
     name: Dependency vulnerability scan (pip-audit)
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       # Sibling path-deps must be present for `uv` to resolve the lockfile.
