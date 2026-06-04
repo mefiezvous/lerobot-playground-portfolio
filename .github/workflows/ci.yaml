@@ -89,13 +89,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      # Sibling path-deps must be present for `uv` to resolve the lockfile.
+      # GH_PAT guard mirrors the other jobs (LRB-001).
+      - name: Checkout sibling path-deps
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git clone https://github.com/mefiezvous/robotics-platform-template ../robotics-platform-template
+          git clone https://x-access-token:${GH_PAT}@github.com/mefiezvous/ml-core ../ml-core
       - uses: astral-sh/setup-uv@f0ec1fc3b38f5e7cd731bb6ce540c5af426746bb # v5.4.2
         with:
           python-version: "3.12"
       - name: Run pip-audit
-        # --skip-editable: ml-core and robotics-platform-template are path-deps
-        # not available in CI without the sibling checkout — skip them and audit
-        # only the published wheels where CVE data exists (LRB-002).
+        # --skip-editable: ml-core and robotics-platform-template are local path-deps —
+        # skip them so pip-audit only audits published wheels where CVE data exists.
         run: uv run --with pip-audit pip-audit --strict --skip-editable
 
   anti-leak:
