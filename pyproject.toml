@@ -29,6 +29,12 @@ dependencies = [
     "loguru>=0.7",
     "robotics-platform-template",
     "ml-core",
+    # Audited 2026-06-04 — transitive CVEs blocked upstream, ignored in CI:
+    # diffusers PYSEC-2026-40/41 + CVE-2026-45804: lerobot==0.5.1 pins
+    # diffusers<0.36, blocking the bump to 0.38.0. Revisit at next lerobot.
+    # starlette PYSEC-2026-161: mlflow==3.12.0 pins starlette<1, blocking
+    # the bump to 1.0.1. Revisit when mlflow supports starlette>=1.
+    # torch PYSEC-2026-139: no fix version available yet (2026-06-04).
 ]
 
 [tool.uv.sources]

@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2026 Arthur Mouraud
+# SPDX-License-Identifier: Apache-2.0
+#
+# Dependabot configuration (LRB-003).
+# Keeps GitHub Actions SHA pins up to date automatically.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - "dependencies"
+      - "github-actions"
+</content>
+</invoke>

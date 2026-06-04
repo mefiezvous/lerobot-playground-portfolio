@@ -7,20 +7,28 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    # Weekly pip-audit run — every Monday at 07:00 UTC (LRB-002)
+    - cron: "0 7 * * 1"
 
 jobs:
   lint:
     name: Lint (ruff)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      # GH_PAT: fine-grained PAT — Contents: Read on mefiezvous/ml-core only.
+      # Rotation cadence: 90 days. Last rotated: see SECRET_ROTATION.md.
+      # Guard: skipped for fork PRs — forks cannot access org secrets anyway,
+      # but this makes the boundary structurally explicit (LRB-001).
       - name: Checkout sibling path-deps
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git clone https://github.com/mefiezvous/robotics-platform-template ../robotics-platform-template
           git clone https://x-access-token:${GH_PAT}@github.com/mefiezvous/ml-core ../ml-core
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@f0ec1fc3b38f5e7cd731bb6ce540c5af426746bb # v5.4.2
         with:
           python-version: "3.12"
       - run: uv sync --extra dev
@@ -31,14 +39,19 @@ jobs:
     name: Type check (mypy)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      # GH_PAT: fine-grained PAT — Contents: Read on mefiezvous/ml-core only.
+      # Rotation cadence: 90 days. Last rotated: see SECRET_ROTATION.md.
+      # Guard: skipped for fork PRs — forks cannot access org secrets anyway,
+      # but this makes the boundary structurally explicit (LRB-001).
       - name: Checkout sibling path-deps
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git clone https://github.com/mefiezvous/robotics-platform-template ../robotics-platform-template
           git clone https://x-access-token:${GH_PAT}@github.com/mefiezvous/ml-core ../ml-core
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@f0ec1fc3b38f5e7cd731bb6ce540c5af426746bb # v5.4.2
         with:
           python-version: "3.12"
       - run: uv sync --extra dev
@@ -50,30 +63,81 @@ jobs:
     env:
       MUJOCO_PLAYGROUND_BACKEND: numpy
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      # GH_PAT: fine-grained PAT — Contents: Read on mefiezvous/ml-core only.
+      # Rotation cadence: 90 days. Last rotated: see SECRET_ROTATION.md.
+      # Guard: skipped for fork PRs — forks cannot access org secrets anyway,
+      # but this makes the boundary structurally explicit (LRB-001).
       - name: Checkout sibling path-deps
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git clone https://github.com/mefiezvous/robotics-platform-template ../robotics-platform-template
           git clone https://x-access-token:${GH_PAT}@github.com/mefiezvous/ml-core ../ml-core
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@f0ec1fc3b38f5e7cd731bb6ce540c5af426746bb # v5.4.2
         with:
           python-version: "3.12"
       - run: uv sync --extra dev
       - run: uv run pytest tests/ -m "not gpu" --cov=src --cov-fail-under=70
 
+  pip-audit:
+    # Runs on every PR and on the weekly cron schedule (LRB-002).
+    # No --strict (incompatible with --skip-editable on local path-deps).
+    # Ignored CVEs documented in pyproject.toml — see comments next to each
+    # blocked transitive dep. Revisit conditions are in those comments.
+    name: Dependency vulnerability scan (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      # Sibling path-deps must be present for `uv` to resolve the lockfile.
+      # GH_PAT guard mirrors the other jobs (LRB-001).
+      - name: Checkout sibling path-deps
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git clone https://github.com/mefiezvous/robotics-platform-template ../robotics-platform-template
+          git clone https://x-access-token:${GH_PAT}@github.com/mefiezvous/ml-core ../ml-core
+      - uses: astral-sh/setup-uv@f0ec1fc3b38f5e7cd731bb6ce540c5af426746bb # v5.4.2
+        with:
+          python-version: "3.12"
+      - name: Run pip-audit
+        # --skip-editable: skip lerobot-playground-portfolio itself and ml-core / robotics-
+        # platform-template (local path-deps) — pip-audit cannot look up CVEs for editable
+        # installs. --strict is intentionally omitted: it would fail whenever an editable is
+        # skipped, which is the expected behaviour here (LRB-002).
+        # --ignore-vuln entries: transitive CVEs blocked by upstream pins (lerobot, mlflow)
+        # or with no fix version yet. See pyproject.toml comments for revisit conditions.
+        run: >
+          uv run --with pip-audit pip-audit --skip-editable
+          --ignore-vuln PYSEC-2026-40
+          --ignore-vuln PYSEC-2026-41
+          --ignore-vuln CVE-2026-45804
+          --ignore-vuln PYSEC-2026-161
+          --ignore-vuln PYSEC-2026-139
+
   anti-leak:
     name: Anti-leak audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Run anti-leak grep audit
+        # Case-insensitive (-i) to catch capitalisation variants (LRB-005).
+        # Glob extended to notebooks/, docs/, tests/, *.ipynb, .github/ (LRB-005, LRB-012).
+        # Excluded from scan (false-positive suppression — these files reference the
+        # blocked patterns in a defensive context only):
+        #   .github/workflows/ci.yaml  — CI script that defines the pattern list
+        #   docs/IP_STRATEGY.md        — policy doc that names the forbidden terms
+        #   docs/CONTRIBUTING.md       — contributor guide that names the forbidden terms
         run: |
           FAIL=0
           for pattern in "_private/" "my-robot-stack/" "proprietary_" "LicenseRef-Proprietary" "All Rights Reserved"; do
-            if grep -r --include="*.py" --include="*.yaml" --include="*.md" --include="*.toml" \
-                    "$pattern" src/ configs/ 2>/dev/null; then
+            if grep -ri --include="*.py" --include="*.yaml" --include="*.md" --include="*.toml" \
+                    --include="*.ipynb" --include="*.sh" \
+                    --exclude-dir=workflows \
+                    --exclude="IP_STRATEGY.md" --exclude="CONTRIBUTING.md" \
+                    "$pattern" src/ configs/ notebooks/ docs/ tests/ .github/ 2>/dev/null; then
               echo "LEAK DETECTED: $pattern"
               FAIL=1
             fi

@@ -41,6 +41,12 @@ A pre-commit hook (also re-run in CI) greps every staged change for the forbidde
 listed above and verifies the SPDX header is present on every `.py`. The hook is **active**
 and must not be bypassed with `--no-verify`. If it fires, fix the content — do not silence it.
 
+> **Important — best-effort only (LRB-005):** The hook uses case-insensitive fixed-string
+> matching over a finite pattern list. It will not catch URL-encoded paths, base64-encoded
+> blobs, Unicode homoglyphs, or patterns split across diff context lines. It is a helpful
+> early warning, not a complete security control. The primary control is developer discipline
+> and code review. If in doubt, run `make audit` and inspect the diff manually before pushing.
+
 | Check | Action on FAIL |
 |---|---|
 | Forbidden string match (proprietary markers, private-layer paths) | Commit rejected |
