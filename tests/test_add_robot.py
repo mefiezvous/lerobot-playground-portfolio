@@ -19,7 +19,8 @@ from pathlib import Path
 import pytest
 
 # Sentinel name unlikely to collide with anything real.
-_SENTINEL = "_pytest_smoke_robot"
+# Must match _NAME_RE = r"^[a-z][a-z0-9_]{1,63}$" (LRB-004 validation).
+_SENTINEL = "pytest_smoke_robot"
 
 
 def _module() -> object:

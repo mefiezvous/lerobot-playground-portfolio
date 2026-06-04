@@ -24,6 +24,7 @@ Usage::
 
 from __future__ import annotations
 
+import re
 import sys
 import textwrap
 from pathlib import Path
@@ -31,6 +32,21 @@ from pathlib import Path
 import yaml
 from loguru import logger
 from mlcore.robots import RobotSpec, build_train_config
+
+# ---------------------------------------------------------------------------
+# Input validation (LRB-004)
+# Robot names and key names are embedded into file paths and generated Python
+# source — they must conform to a strict identifier pattern.
+# ---------------------------------------------------------------------------
+_NAME_RE = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
+
+
+def _validate_name(value: str, label: str = "name") -> str:
+    """Return *value* unchanged if it matches _NAME_RE, else abort with a clear error."""
+    if not _NAME_RE.fullmatch(value):
+        raise SystemExit(f"Invalid {label} {value!r}: must match {_NAME_RE.pattern}")
+    return value
+
 
 # Paths relative to this script: src/playground/scripts/ → src/playground/
 _SCRIPT_DIR = Path(__file__).resolve().parent
@@ -64,7 +80,7 @@ def _parse_argv() -> dict[str, str]:
         logger.error(f"Missing robot name.\n{_USAGE}")
         sys.exit(1)
 
-    parsed: dict[str, str] = {"name": args[0]}
+    parsed: dict[str, str] = {"name": _validate_name(args[0], "robot name")}
     bool_flags = {"dry_run"}
     i = 1
     while i < len(args):
@@ -94,11 +110,15 @@ def _build_spec(params: dict[str, str]) -> RobotSpec:
             logger.error(f"Missing required flag --{required.replace('_', '-')}.\n{_USAGE}")
             sys.exit(1)
 
-    ee_pos_key = params.get("ee_pos_key", "ee_pos")
-    target_pos_key = params.get("target_pos_key", "cube_pos")
+    ee_pos_key = _validate_name(params.get("ee_pos_key", "ee_pos"), "--ee-pos-key")
+    target_pos_key = _validate_name(params.get("target_pos_key", "cube_pos"), "--target-pos-key")
 
     if "obs_keys" in params:
-        obs_keys = [k.strip() for k in params["obs_keys"].split(",") if k.strip()]
+        obs_keys = [
+            _validate_name(k.strip(), "--obs-keys item")
+            for k in params["obs_keys"].split(",")
+            if k.strip()
+        ]
     else:
         obs_keys = [ee_pos_key, target_pos_key]
 
