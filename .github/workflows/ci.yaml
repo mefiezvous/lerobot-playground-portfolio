@@ -102,9 +102,11 @@ jobs:
         with:
           python-version: "3.12"
       - name: Run pip-audit
-        # --skip-editable: ml-core and robotics-platform-template are local path-deps —
-        # skip them so pip-audit only audits published wheels where CVE data exists.
-        run: uv run --with pip-audit pip-audit --strict --skip-editable
+        # --skip-editable: skip lerobot-playground-portfolio itself and ml-core / robotics-
+        # platform-template (local path-deps) — pip-audit cannot look up CVEs for editable
+        # installs. --strict is intentionally omitted: it would fail whenever an editable is
+        # skipped, which is the expected behaviour here (LRB-002).
+        run: uv run --with pip-audit pip-audit --skip-editable
 
   anti-leak:
     name: Anti-leak audit
