@@ -93,7 +93,10 @@ jobs:
         with:
           python-version: "3.12"
       - name: Run pip-audit
-        run: uv run --with pip-audit pip-audit --strict
+        # --skip-editable: ml-core and robotics-platform-template are path-deps
+        # not available in CI without the sibling checkout — skip them and audit
+        # only the published wheels where CVE data exists (LRB-002).
+        run: uv run --with pip-audit pip-audit --strict --skip-editable
 
   anti-leak:
     name: Anti-leak audit
@@ -103,11 +106,18 @@ jobs:
       - name: Run anti-leak grep audit
         # Case-insensitive (-i) to catch capitalisation variants (LRB-005).
         # Glob extended to notebooks/, docs/, tests/, *.ipynb, .github/ (LRB-005, LRB-012).
+        # Excluded from scan (false-positive suppression — these files reference the
+        # blocked patterns in a defensive context only):
+        #   .github/workflows/ci.yaml  — CI script that defines the pattern list
+        #   docs/IP_STRATEGY.md        — policy doc that names the forbidden terms
+        #   docs/CONTRIBUTING.md       — contributor guide that names the forbidden terms
         run: |
           FAIL=0
           for pattern in "_private/" "my-robot-stack/" "proprietary_" "LicenseRef-Proprietary" "All Rights Reserved"; do
             if grep -ri --include="*.py" --include="*.yaml" --include="*.md" --include="*.toml" \
                     --include="*.ipynb" --include="*.sh" \
+                    --exclude-dir=workflows \
+                    --exclude="IP_STRATEGY.md" --exclude="CONTRIBUTING.md" \
                     "$pattern" src/ configs/ notebooks/ docs/ tests/ .github/ 2>/dev/null; then
               echo "LEAK DETECTED: $pattern"
               FAIL=1
