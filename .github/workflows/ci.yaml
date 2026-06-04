@@ -83,13 +83,11 @@ jobs:
 
   pip-audit:
     # Runs on every PR and on the weekly cron schedule (LRB-002).
-    # continue-on-error: true — pip-audit exit code 1 means CVEs were found.
-    # This job is INFORMATIONAL: findings must be triaged but do not block
-    # PRs that do not change deps. Open a separate issue/PR to fix each
-    # ≥ High finding. See docs/SECURITY_AUDIT_2026-06-03.md LRB-002.
+    # No --strict (incompatible with --skip-editable on local path-deps).
+    # Ignored CVEs documented in pyproject.toml — see comments next to each
+    # blocked transitive dep. Revisit conditions are in those comments.
     name: Dependency vulnerability scan (pip-audit)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       # Sibling path-deps must be present for `uv` to resolve the lockfile.
@@ -109,7 +107,15 @@ jobs:
         # platform-template (local path-deps) — pip-audit cannot look up CVEs for editable
         # installs. --strict is intentionally omitted: it would fail whenever an editable is
         # skipped, which is the expected behaviour here (LRB-002).
-        run: uv run --with pip-audit pip-audit --skip-editable
+        # --ignore-vuln entries: transitive CVEs blocked by upstream pins (lerobot, mlflow)
+        # or with no fix version yet. See pyproject.toml comments for revisit conditions.
+        run: >
+          uv run --with pip-audit pip-audit --skip-editable
+          --ignore-vuln PYSEC-2026-40
+          --ignore-vuln PYSEC-2026-41
+          --ignore-vuln CVE-2026-45804
+          --ignore-vuln PYSEC-2026-161
+          --ignore-vuln PYSEC-2026-139
 
   anti-leak:
     name: Anti-leak audit
