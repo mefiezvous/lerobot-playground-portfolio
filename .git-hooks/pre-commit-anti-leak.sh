@@ -22,11 +22,12 @@ fi
 
 FOUND=0
 for pattern in "${BLOCKED_PATTERNS[@]}"; do
-    if echo "$STAGED_FILES" | grep -qF "$pattern" 2>/dev/null; then
+    # Case-insensitive (-i) to catch capitalisation variants e.g. _Private/, My-Robot-Stack/ (LRB-005).
+    if echo "$STAGED_FILES" | grep -qiF "$pattern" 2>/dev/null; then
         echo "ANTI-LEAK BLOCKED: filename matches '$pattern'"
         FOUND=1
     fi
-    if git diff --cached -U0 2>/dev/null | grep -qF "$pattern" 2>/dev/null; then
+    if git diff --cached -U0 2>/dev/null | grep -qiF "$pattern" 2>/dev/null; then
         echo "ANTI-LEAK BLOCKED: content matches '$pattern' in staged diff"
         FOUND=1
     fi
