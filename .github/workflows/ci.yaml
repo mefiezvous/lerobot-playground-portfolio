@@ -103,12 +103,41 @@ jobs:
         with:
           python-version: "3.12"
       - name: Run pip-audit
-        # --skip-editable: skip lerobot-playground-portfolio itself and ml-core / robotics-
-        # platform-template (local path-deps) — pip-audit cannot look up CVEs for editable
-        # installs. --strict is intentionally omitted: it would fail whenever an editable is
-        # skipped, which is the expected behaviour here (LRB-002).
-        # --ignore-vuln entries: transitive CVEs blocked by upstream pins (lerobot, mlflow)
-        # or with no fix version yet. See pyproject.toml comments for revisit conditions.
+        # --skip-editable: skip lerobot-playground-portfolio itself and ml-core /
+        # robotics-platform-template (local path-deps) — pip-audit cannot look up CVEs
+        # for editable installs. --strict is intentionally omitted: it would fail whenever
+        # an editable is skipped, which is the expected behaviour here (LRB-002).
+        #
+        # Ignored CVEs — each entry is a deliberate, tracked exception:
+        #
+        # diffusers PYSEC-2026-40 (alias CVE-2026-44513): trust_remote_code bypass.
+        #   Fix: diffusers>=0.38.0. Blocked by lerobot==0.5.1 which pins diffusers<0.36.
+        #   Revisit: when lerobot >0.5.1 is released on PyPI and drops the diffusers cap.
+        #   Next review: 2026-09-05.
+        #
+        # diffusers PYSEC-2026-41 (alias CVE-2026-44827): None.py RCE bypass.
+        #   Fix: diffusers>=0.38.0. Same upstream pin blocker as PYSEC-2026-40.
+        #   Revisit: same condition as PYSEC-2026-40.
+        #   Next review: 2026-09-05.
+        #
+        # diffusers CVE-2026-45804 (GHSA-7wx4-6vff-v64p): TOCTOU race in from_pretrained.
+        #   Fix: diffusers>=0.38.0. Same upstream pin blocker as PYSEC-2026-40.
+        #   Revisit: same condition as PYSEC-2026-40.
+        #   Next review: 2026-09-05.
+        #
+        # starlette PYSEC-2026-161 (alias CVE-2026-48710): Host header injection in
+        #   request.url reconstruction. Fix: starlette>=1.0.1. Blocked by mlflow==3.12.0
+        #   which requires starlette<1. pip-audit reports this CVE twice (duplicate DB
+        #   entry) — one --ignore-vuln covers both.
+        #   Revisit: when mlflow supports starlette>=1.0.1.
+        #   Next review: 2026-09-05.
+        #
+        # torch PYSEC-2026-139 (alias CVE-2026-4538): deserialization in pt2 loader.
+        #   Fix version: NONE in pip-audit DB as of 2026-06-05 (fix_versions=[]).
+        #   torch 2.12.0 exists on PyPI but lerobot==0.5.1 caps torch<2.11.0, so a
+        #   bump is blocked by the same lerobot constraint as the diffusers CVEs.
+        #   Revisit: when lerobot >0.5.1 is released and PyTorch marks a fixed version.
+        #   Next review: 2026-09-05.
         run: >
           uv run --with pip-audit pip-audit --skip-editable
           --ignore-vuln PYSEC-2026-40
