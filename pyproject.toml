@@ -29,12 +29,17 @@ dependencies = [
     "loguru>=0.7",
     "robotics-platform-template",
     "ml-core",
-    # Audited 2026-06-04 — transitive CVEs blocked upstream, ignored in CI:
-    # diffusers PYSEC-2026-40/41 + CVE-2026-45804: lerobot==0.5.1 pins
-    # diffusers<0.36, blocking the bump to 0.38.0. Revisit at next lerobot.
-    # starlette PYSEC-2026-161: mlflow==3.12.0 pins starlette<1, blocking
-    # the bump to 1.0.1. Revisit when mlflow supports starlette>=1.
-    # torch PYSEC-2026-139: no fix version available yet (2026-06-04).
+    # CVE triage 2026-06-05 — next review 2026-09-05.
+    # Resolved: aiohttp CVE-2026-34993 + CVE-2026-47265 → fixed by aiohttp>=3.14.0
+    #   (pulled in transitively via ml-core; no explicit constraint needed here).
+    # Ignored in CI pip-audit (blocked upstream, see .github/workflows/ci.yaml):
+    #   diffusers PYSEC-2026-40 / PYSEC-2026-41 / CVE-2026-45804: fix=0.38.0
+    #     blocked by lerobot==0.5.1 which pins diffusers<0.36. Revisit at next
+    #     lerobot release (latest on PyPI: 0.5.1 as of 2026-06-05).
+    #   starlette PYSEC-2026-161 (CVE-2026-48710): fix=1.0.1 blocked by
+    #     mlflow==3.12.0 which pins starlette<1. Revisit when mlflow supports >=1.
+    #   torch PYSEC-2026-139 (CVE-2026-4538): no fix version in DB (2026-06-05).
+    #     torch 2.12.0 exists but lerobot==0.5.1 caps torch<2.11.0, doubly blocked.
 ]
 
 [tool.uv.sources]
