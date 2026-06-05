@@ -127,9 +127,10 @@ jobs:
         # Glob extended to notebooks/, docs/, tests/, *.ipynb, .github/ (LRB-005, LRB-012).
         # Excluded from scan (false-positive suppression — these files reference the
         # blocked patterns in a defensive context only):
-        #   .github/workflows/ci.yaml  — CI script that defines the pattern list
-        #   docs/IP_STRATEGY.md        — policy doc that names the forbidden terms
-        #   docs/CONTRIBUTING.md       — contributor guide that names the forbidden terms
+        #   .github/workflows/ci.yaml     — CI script that defines the pattern list
+        #   docs/IP_STRATEGY.md           — policy doc that names the forbidden terms
+        #   docs/CONTRIBUTING.md          — contributor guide that names the forbidden terms
+        #   docs/SECURITY_AUDIT_*.md      — audit reports that enumerate the patterns as findings
         run: |
           FAIL=0
           for pattern in "_private/" "my-robot-stack/" "proprietary_" "LicenseRef-Proprietary" "All Rights Reserved"; do
@@ -137,6 +138,7 @@ jobs:
                     --include="*.ipynb" --include="*.sh" \
                     --exclude-dir=workflows \
                     --exclude="IP_STRATEGY.md" --exclude="CONTRIBUTING.md" \
+                    --exclude="SECURITY_AUDIT_*.md" \
                     "$pattern" src/ configs/ notebooks/ docs/ tests/ .github/ 2>/dev/null; then
               echo "LEAK DETECTED: $pattern"
               FAIL=1
