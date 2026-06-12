@@ -138,6 +138,13 @@ jobs:
         #   bump is blocked by the same lerobot constraint as the diffusers CVEs.
         #   Revisit: when lerobot >0.5.1 is released and PyTorch marks a fixed version.
         #   Next review: 2026-09-05.
+        #
+        # torch CVE-2025-3000: newly disclosed, no PYSEC alias yet.
+        #   Fix version: NONE in pip-audit DB as of 2026-06-12 (fix_versions=[]).
+        #   torch 2.10.0 is pinned by the same lerobot==0.5.1 cap (torch<2.11.0) as
+        #   PYSEC-2026-139 above — even if a fix existed, the bump is blocked.
+        #   Revisit: when lerobot >0.5.1 is released and PyTorch marks a fixed version.
+        #   Next review: 2026-09-05.
         run: >
           uv run --with pip-audit pip-audit --skip-editable
           --ignore-vuln PYSEC-2026-40
@@ -145,6 +152,7 @@ jobs:
           --ignore-vuln CVE-2026-45804
           --ignore-vuln PYSEC-2026-161
           --ignore-vuln PYSEC-2026-139
+          --ignore-vuln CVE-2025-3000
 
   anti-leak:
     name: Anti-leak audit
@@ -154,6 +162,8 @@ jobs:
       - name: Run anti-leak grep audit
         # Case-insensitive (-i) to catch capitalisation variants (LRB-005).
         # Glob extended to notebooks/, docs/, tests/, *.ipynb, .github/ (LRB-005, LRB-012).
+        # robot_specs/ included (WS-01): it is RW-mounted and writable via the orchestrator
+        # API, so API-authored YAML must be leak-scanned by CI, not only by pre-commit.
         # Excluded from scan (false-positive suppression — these files reference the
         # blocked patterns in a defensive context only):
         #   .github/workflows/ci.yaml     — CI script that defines the pattern list
@@ -168,7 +178,7 @@ jobs:
                     --exclude-dir=workflows \
                     --exclude="IP_STRATEGY.md" --exclude="CONTRIBUTING.md" \
                     --exclude="SECURITY_AUDIT_*.md" \
-                    "$pattern" src/ configs/ notebooks/ docs/ tests/ .github/ 2>/dev/null; then
+                    "$pattern" src/ configs/ notebooks/ docs/ tests/ .github/ robot_specs/ 2>/dev/null; then
               echo "LEAK DETECTED: $pattern"
               FAIL=1
             fi

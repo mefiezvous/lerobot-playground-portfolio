@@ -49,7 +49,15 @@ class TestEnvAdapterNomenclature:
 
     @pytest.mark.parametrize("name", EnvAdapterRegistry.list_adapters())
     def test_class_name_matches_key(self, name: str) -> None:
-        cls = EnvAdapterRegistry.get(name)
+        adapter = EnvAdapterRegistry.get(name)
+        if not isinstance(adapter, type):
+            # Data-driven (robot_specs/*.yaml) registrations map to a
+            # functools.partial factory around MujocoPlaygroundAdapter —
+            # the snake_case ↔ PascalCase class-naming convention only
+            # applies to hand-written @register()'d adapter classes.
+            pytest.skip(f"'{name}' is a data-driven factory, not an adapter class")
+
+        cls = adapter
         expected = f"{_snake_to_pascal(name)}Adapter"
         assert cls.__name__ == expected, (
             f"Registry key '{name}' maps to class '{cls.__name__}', "

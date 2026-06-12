@@ -111,7 +111,6 @@ def _build_spec(params: dict[str, str]) -> RobotSpec:
             sys.exit(1)
 
     ee_pos_key = _validate_name(params.get("ee_pos_key", "ee_pos"), "--ee-pos-key")
-    target_pos_key = _validate_name(params.get("target_pos_key", "cube_pos"), "--target-pos-key")
 
     if "obs_keys" in params:
         obs_keys = [
@@ -120,6 +119,18 @@ def _build_spec(params: dict[str, str]) -> RobotSpec:
             if k.strip()
         ]
     else:
+        obs_keys = None
+
+    if "target_pos_key" in params:
+        target_pos_key = _validate_name(params["target_pos_key"], "--target-pos-key")
+    elif obs_keys is not None and "cube_pos" not in obs_keys:
+        # No explicit target — fall back to the last declared obs key so
+        # target_pos_key stays a member of obs_keys (RobotSpec invariant).
+        target_pos_key = obs_keys[-1]
+    else:
+        target_pos_key = "cube_pos"
+
+    if obs_keys is None:
         obs_keys = [ee_pos_key, target_pos_key]
 
     return RobotSpec(
