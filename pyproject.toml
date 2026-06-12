@@ -92,9 +92,6 @@ module = [
 ]
 ignore_missing_imports = true
 
-[tool.coverage.run]
-omit = ["src/playground/scripts/*"]
-
 [tool.pytest.ini_options]
 addopts = "--cov=src --cov-report=term-missing"
 markers = [
