@@ -4,15 +4,16 @@
 
 Importing this module has the side-effect of populating the
 :class:`robotics_platform.envs.registry.EnvAdapterRegistry` with the
-playground-specific entries. Each registered name maps to a zero-arg
-factory (a thin :class:`MujocoPlaygroundAdapter` subclass) that the
-pipeline can instantiate without knowing about the underlying simulator.
+playground-specific entries.
 
-In addition, every ``robot_specs/*.yaml`` entry is loaded as a
+Every ``robot_specs/*.yaml`` entry is loaded as a
 :class:`mlcore.robots.base.RobotSpec` and — for ``adapter.type:
-mujoco_playground`` entries — registered as a factory too. YAML
-registrations run after the static ones above, so a YAML spec sharing an
-``id`` with a hardcoded adapter wins (with a logged warning).
+mujoco_playground`` entries — registered as a zero-arg
+:class:`MujocoPlaygroundAdapter` factory (a ``functools.partial``) so the
+pipeline can instantiate it without knowing about the underlying
+simulator. Hardware/real-robot adapters (no ``adapter`` block, or an
+unsupported ``adapter.type``) remain code-only and would be registered
+here via an explicit ``@register`` decorator.
 """
 
 from __future__ import annotations
@@ -21,22 +22,8 @@ import os
 from pathlib import Path
 
 from mlcore.robots.yaml_loader import load_specs_from_dir
-from robotics_platform.envs.registry import register
 
-from playground.envs.mujoco_playground_adapter import MujocoPlaygroundAdapter
 from playground.envs.yaml_registrations import register_from_yaml
-
-
-@register("cube_reach_v1")
-class CubeReachV1Adapter(MujocoPlaygroundAdapter):
-    """Zero-arg adapter for the CubeReachV1 MuJoCo Playground env."""
-
-    def __init__(self) -> None:
-        super().__init__(
-            env_name="CubeReachV1",
-            task_description="Reach the cube",
-        )
-
 
 # Module-level bootstrap: registrations.py is imported purely for its
 # side effects (see playground.data.pipeline), before Hydra config is

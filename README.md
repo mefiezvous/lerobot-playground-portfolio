@@ -50,13 +50,18 @@ dataset hash + full config logged to MLflow on every run.
 ## Add a robot
 
 Full tutorial: [robotics-platform-template/docs/ADD_A_ROBOT.md](../robotics-platform-template/docs/ADD_A_ROBOT.md).
-Three-command summary:
+
+Robots are declared data-first: drop a `robot_specs/<id>.yaml` file describing the
+`spec`, `task`, `adapter` and `dataset` blocks (see
+[`robot_specs/cube_reach_v1.yaml`](robot_specs/cube_reach_v1.yaml) for the canonical
+example). It is registered automatically at import via
+`playground.envs.registrations` — no Python scaffolding to generate. Robots can also
+be declared/branched/edited through the orchestrator's `/api/v1/robots` endpoint, which
+writes the same YAML. Then run the pipeline:
 
 ```bash
-uv run python -m playground.scripts.add_robot <name> --n-joints N --action-dim D \
-    --obs-keys "ee_pos,target_pos,joints" --task-description "..."
-uv run python collect.py env=<name> dataset=<name> episodes=200 push_to_hub=true
-uv run python train.py   env=<name> policy=act
+uv run python collect.py env=<id> dataset=<id> episodes=200 push_to_hub=true
+uv run python train.py   env=<id> policy=act
 ```
 
 ## Documentation

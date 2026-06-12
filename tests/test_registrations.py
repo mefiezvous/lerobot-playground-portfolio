@@ -6,16 +6,20 @@ Enforces the rules documented in
 ``robotics-platform-template/docs/GLOSSARY.md``:
 
 * Registry keys are snake_case (``cube_reach_v1``).
-* Class names are PascalCase with the ``Adapter`` suffix
-  (``CubeReachV1Adapter``).
-* The PascalCase of the registry key matches the class name (minus the
-  ``Adapter`` suffix).
+* For hand-written ``@register()``'d adapter classes, class names are
+  PascalCase with the ``Adapter`` suffix, and the PascalCase of the
+  registry key matches the class name (minus the ``Adapter`` suffix).
+
+Data-driven ``robot_specs/*.yaml`` entries register a ``functools.partial``
+factory around :class:`MujocoPlaygroundAdapter` rather than a dedicated
+class, so the class-naming rule does not apply to them.
 
 This prevents nomenclature drift when adding new envs.
 """
 
 from __future__ import annotations
 
+import functools
 import re
 
 import pytest
@@ -23,6 +27,7 @@ from robotics_platform.envs.registry import EnvAdapterRegistry
 
 # Importing the module has the side-effect of populating the registry.
 import playground.envs.registrations  # noqa: F401
+from playground.envs.mujoco_playground_adapter import MujocoPlaygroundAdapter
 
 SNAKE_CASE = re.compile(r"^[a-z][a-z0-9_]*[a-z0-9]$")
 
@@ -64,3 +69,21 @@ class TestEnvAdapterNomenclature:
             f"expected '{expected}' per snake_case → PascalCase + 'Adapter' convention "
             "(see robotics-platform-template/docs/GLOSSARY.md)."
         )
+
+    def test_cube_reach_v1_registered_from_yaml_factory(self) -> None:
+        """``cube_reach_v1`` is registered by the data-driven YAML loader.
+
+        It used to be a hand-written ``CubeReachV1Adapter`` class (removed in
+        P2 cleanup); the single source of truth is now
+        ``robot_specs/cube_reach_v1.yaml``. ``get`` must return a
+        ``functools.partial`` factory around :class:`MujocoPlaygroundAdapter`,
+        not an adapter class.
+        """
+        factory = EnvAdapterRegistry.get("cube_reach_v1")
+        assert not isinstance(factory, type), (
+            "cube_reach_v1 should be a data-driven factory, not an adapter class"
+        )
+        assert isinstance(factory, functools.partial)
+        assert factory.func is MujocoPlaygroundAdapter
+        assert factory.keywords.get("env_name") == "CubeReachV1"
+        assert factory.keywords.get("task_description") == "Reach the cube"

@@ -28,8 +28,8 @@ lerobot-playground-portfolio/
 │   ├── policies/     act_wrapper.py, diffusion_wrapper.py (re-export from ml-core)
 │   ├── training/     trainer.py — re-export from ml-core (MLflow + checkpoints + HF push)
 │   ├── eval/         evaluator.py — re-export from ml-core + EvaluatorWithViz
-│   ├── utils/        visualizer.py — render_episode, plot_rewards
-│   └── scripts/      add_robot.py
+│   └── utils/        visualizer.py — render_episode, plot_rewards
+├── robot_specs/      cube_reach_v1.yaml — data-driven robot declarations (spec/task/adapter/dataset)
 ├── train.py          Hydra entrypoint — dataset + policy + Trainer wiring
 ├── eval.py           Hydra entrypoint — checkpoint load + Evaluator
 └── configs/
