@@ -37,4 +37,6 @@ If the decision is fully local and reversible, a code comment is enough.
 
 ## Index
 
-_(No local ADRs yet.)_
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-001](ADR-001-robot-specs-yaml-registry.md) | `robot_specs/*.yaml` data-driven registry for MuJoCo Playground envs | Implemented 2026-06-10 |
