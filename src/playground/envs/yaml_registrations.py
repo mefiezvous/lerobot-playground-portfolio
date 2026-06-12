@@ -14,6 +14,7 @@ are skipped with a warning — hardware/real-robot adapters remain code-only
 from __future__ import annotations
 
 import functools
+import re
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +25,13 @@ from robotics_platform.envs.registry import register_factory
 from playground.envs.mujoco_playground_adapter import MujocoPlaygroundAdapter
 
 _SUPPORTED_ADAPTER_TYPES = {"mujoco_playground"}
+
+# WS-03: re-validate untrusted YAML at the consumer boundary. robot_specs/ is
+# writable via the orchestrator API; even though the API validates on write,
+# this loader must not feed an arbitrary string into the registry / adapter if
+# a file ever reaches it by another path (hand edit, widened mount).
+_ID_RE = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
+_ENV_NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,63}$")
 
 
 def register_from_yaml(specs_dir: Path) -> None:
@@ -39,6 +47,13 @@ def register_from_yaml(specs_dir: Path) -> None:
     for path in sorted(specs_dir.glob("*.yaml")):
         entry = _load_entry(path)
         spec_id = entry["id"]
+        if not _ID_RE.fullmatch(str(spec_id)):
+            logger.warning(
+                f"Robot spec file {path} has malformed id {spec_id!r} "
+                f"(must match {_ID_RE.pattern}) — skipping registration"
+            )
+            continue
+
         adapter = entry.get("adapter")
         if not adapter:
             logger.debug(f"Robot spec '{spec_id}' has no adapter block — skipping registration")
@@ -53,6 +68,13 @@ def register_from_yaml(specs_dir: Path) -> None:
             continue
 
         env_name = adapter["env_name"]
+        if not _ENV_NAME_RE.fullmatch(str(env_name)):
+            logger.warning(
+                f"Robot spec '{spec_id}' has malformed adapter.env_name {env_name!r} "
+                f"(must match {_ENV_NAME_RE.pattern}) — skipping registration"
+            )
+            continue
+
         task_description = entry.get("task", {}).get("task_description", "")
         register_factory(
             spec_id,

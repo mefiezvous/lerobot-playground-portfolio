@@ -48,6 +48,32 @@ adapter:
   env_name: SomeEnv
 """
 
+# WS-03: env_name carrying characters that would not survive the API validator
+# (e.g. an OmegaConf-style injection) must be rejected at the loader too.
+_BAD_ENV_NAME_SPEC = """
+id: yaml_reg_bad_env
+spec:
+  n_joints: 6
+  obs_keys: [ee_pos, target_pos]
+  action_dim: 6
+  target_pos_key: target_pos
+adapter:
+  type: mujoco_playground
+  env_name: "${oc.env:HF_TOKEN}"
+"""
+
+_BAD_ID_SPEC = """
+id: "../escape"
+spec:
+  n_joints: 6
+  obs_keys: [ee_pos, target_pos]
+  action_dim: 6
+  target_pos_key: target_pos
+adapter:
+  type: mujoco_playground
+  env_name: SomeEnv
+"""
+
 
 @pytest.mark.unit
 def test_register_from_yaml_noop_for_missing_dir(tmp_path: Path) -> None:
@@ -92,3 +118,21 @@ def test_register_from_yaml_skips_unsupported_adapter_type(
 
     assert "yaml_reg_unsupported" not in EnvAdapterRegistry.list_adapters()
     assert any("unsupported adapter.type" in rec.message for rec in caplog.records)
+
+
+@pytest.mark.unit
+def test_register_from_yaml_skips_malformed_env_name(tmp_path: Path) -> None:
+    (tmp_path / "spec.yaml").write_text(_BAD_ENV_NAME_SPEC, encoding="utf-8")
+
+    register_from_yaml(tmp_path)
+
+    assert "yaml_reg_bad_env" not in EnvAdapterRegistry.list_adapters()
+
+
+@pytest.mark.unit
+def test_register_from_yaml_skips_malformed_id(tmp_path: Path) -> None:
+    (tmp_path / "spec.yaml").write_text(_BAD_ID_SPEC, encoding="utf-8")
+
+    register_from_yaml(tmp_path)
+
+    assert "../escape" not in EnvAdapterRegistry.list_adapters()
