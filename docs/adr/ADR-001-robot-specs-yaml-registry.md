@@ -29,7 +29,7 @@ adapter: {type: mujoco_playground, env_name: CubeReachV1}   # null/absent = no a
 dataset: {repo_id, task_id, root}
 ```
 
-New module `src/playground/envs/yaml_registrations.py::register_from_yaml(specs_dir)`: for every entry with `adapter.type == "mujoco_playground"`, calls `register_factory(entry["id"], functools.partial(MujocoPlaygroundAdapter, env_name=..., task_description=...))`. Entries with no `adapter` block are skipped silently (debug log) — this is the expected shape for lineage stubs (e.g. `cube_reach_v2`) that don't yet have a runnable env. Entries with an `adapter.type` other than `mujoco_playground` are skipped with a **warning** — hardware/real-robot adapters are explicitly out of scope for data-driven registration and remain code-only (`registrations.py`, `_private/my-robot-stack`).
+New module `src/playground/envs/yaml_registrations.py::register_from_yaml(specs_dir)`: for every entry with `adapter.type == "mujoco_playground"`, calls `register_factory(entry["id"], functools.partial(MujocoPlaygroundAdapter, env_name=..., task_description=...))`. Entries with no `adapter` block are skipped silently (debug log) — this is the expected shape for lineage stubs (e.g. `cube_reach_v2`) that don't yet have a runnable env. Entries with an `adapter.type` other than `mujoco_playground` are skipped with a **warning** — hardware/real-robot adapters are explicitly out of scope for data-driven registration and remain code-only (in `registrations.py`, or in other non-public layers entirely).
 
 `src/playground/envs/registrations.py` — already imported for its side effects by `playground.data.pipeline` and `collect.py`/`train.py` — now also calls, after its existing `@register`'d classes:
 
