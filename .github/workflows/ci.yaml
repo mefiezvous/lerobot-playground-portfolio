@@ -138,6 +138,13 @@ jobs:
         #   bump is blocked by the same lerobot constraint as the diffusers CVEs.
         #   Revisit: when lerobot >0.5.1 is released and PyTorch marks a fixed version.
         #   Next review: 2026-09-05.
+        #
+        # torch CVE-2025-3000: newly disclosed, no PYSEC alias yet.
+        #   Fix version: NONE in pip-audit DB as of 2026-06-12 (fix_versions=[]).
+        #   torch 2.10.0 is pinned by the same lerobot==0.5.1 cap (torch<2.11.0) as
+        #   PYSEC-2026-139 above — even if a fix existed, the bump is blocked.
+        #   Revisit: when lerobot >0.5.1 is released and PyTorch marks a fixed version.
+        #   Next review: 2026-09-05.
         run: >
           uv run --with pip-audit pip-audit --skip-editable
           --ignore-vuln PYSEC-2026-40
@@ -145,6 +152,7 @@ jobs:
           --ignore-vuln CVE-2026-45804
           --ignore-vuln PYSEC-2026-161
           --ignore-vuln PYSEC-2026-139
+          --ignore-vuln CVE-2025-3000
 
   anti-leak:
     name: Anti-leak audit
